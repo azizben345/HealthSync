@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../avatar/controller/avatar_controller.dart';
+import 'package:lottie/lottie.dart';
 
 class InputView extends StatefulWidget {
   const InputView({super.key});
@@ -26,22 +27,40 @@ class _InputViewState extends State<InputView> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // --- THE AVATAR PLACEHOLDER ---
-            Container(
+            // --- AVATAR PLACEHOLDER ---
+            // Container(
+            //   height: 200,
+            //   width: 200,
+            //   decoration: BoxDecoration(
+            //     color: _getMoodColor(avatarCtrl.avatarState),
+            //     shape: BoxShape.circle,
+            //   ),
+            //   child: Center(
+            //     child: avatarCtrl.isLoading 
+            //       ? const CircularProgressIndicator(color: Colors.white)
+            //       : Text(
+            //           avatarCtrl.avatarState.toUpperCase(),
+            //           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            //         ),
+            //   ),
+            // ),
+            // --- AVATAR VISUAL/ANIMATION ---
+            SizedBox(
               height: 200,
               width: 200,
-              decoration: BoxDecoration(
-                color: _getMoodColor(avatarCtrl.avatarState),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: avatarCtrl.isLoading 
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : Text(
-                      avatarCtrl.avatarState.toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-              ),
+              child: avatarCtrl.isLoading 
+                ? const Center(child: CircularProgressIndicator()) // Show spinner while Gemini thinks
+                : Lottie.asset(
+                    // dynamically loads the file based on Gemini's state!
+                    'assets/animations/${avatarCtrl.avatarState}.json', 
+                    fit: BoxFit.contain,
+                    // maybe add an error builder just in case you spell a file name wrong
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Text("Animation not found", style: TextStyle(color: Colors.red)),
+                      );
+                    },
+                  ),
             ),
             const SizedBox(height: 10),
             Text(avatarCtrl.coachMessage, textAlign: TextAlign.center, 
