@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'lib/data/services/ai_service.dart';
-import 'lib/features/avatar/controller/avatar_controller.dart';
+import 'package:healthsync_demo_v01_00/app.dart';
+import 'data/services/ai_service.dart';
+import 'features/avatar/controller/avatar_controller.dart';
 import 'package:provider/provider.dart'; // use Provider for state
 
 Future<void> main() async {
