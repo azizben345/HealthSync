@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../data/services/ai_service.dart';
+// for mock data function
+import 'package:drift/drift.dart';
+import '../../../data/database/app_database.dart';
 
 class AvatarController extends ChangeNotifier {
   final AIService _aiService;
@@ -16,7 +19,7 @@ class AvatarController extends ChangeNotifier {
 
   AvatarController(this._aiService);
 
-  /// This is the main function that handles the logic
+  /// main function - handle logic
   Future<void> updateAvatarLogic({
     required int steps,
     required double sleep,
@@ -41,4 +44,28 @@ class AvatarController extends ChangeNotifier {
       notifyListeners(); // Tell the UI to show the new data
     }
   }
+
+  // // to generate mock data (can link to button)
+  // Future<void> generateMockData(AppDatabase db) async {
+  //   // Creating 3 days of fake history
+  //   final mockEntries = [
+  //     DailyRecordsCompanion.insert(
+  //       date: Value(DateTime.now().subtract(const Duration(days: 1))),
+  //       steps: 3000, sleepHours: 4.5, diaryNote: "Rough night and day.", avatarState: "tired",
+  //     ),
+  //     DailyRecordsCompanion.insert(
+  //       date: Value(DateTime.now().subtract(const Duration(days: 2))),
+  //       steps: 12000, sleepHours: 8.0, diaryNote: "Great workout!", avatarState: "proud",
+  //     ),
+  //     DailyRecordsCompanion.insert(
+  //       date: Value(DateTime.now().subtract(const Duration(days: 3))),
+  //       steps: 8000, sleepHours: 7.0, diaryNote: "Normal day.", avatarState: "happy",
+  //     ),
+  //   ];
+
+  //   for (var entry in mockEntries) {
+  //     await db.insertRecord(entry);
+  //   }
+  //   print("Mock data injected!");
+  // }
 }

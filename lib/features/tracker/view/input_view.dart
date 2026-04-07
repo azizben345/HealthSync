@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:healthsync_demo_v01_00/features/history/view/history_view.dart';
 import 'package:provider/provider.dart';
 import '../../avatar/controller/avatar_controller.dart';
 import 'package:lottie/lottie.dart';
@@ -44,6 +45,15 @@ class _InputViewState extends State<InputView> {
             //         ),
             //   ),
             // ),
+            IconButton( // navigate to View History
+              icon: const Icon(Icons.history),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoryView()),
+                );
+              },
+            ),
             // --- AVATAR VISUAL/ANIMATION ---
             SizedBox(
               height: 200,
