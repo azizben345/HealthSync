@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../data/services/ai_service.dart';
-// for mock data function
-import 'package:drift/drift.dart';
 import '../../../data/database/app_database.dart';
+// import 'package:drift/drift.dart' as drift;
 
 class AvatarController extends ChangeNotifier {
   final AIService _aiService;
+  final AppDatabase _db;
 
   // Internal State
   String _avatarState = 'neutral'; // Default state
@@ -17,7 +17,7 @@ class AvatarController extends ChangeNotifier {
   String get coachMessage => _coachMessage;
   bool get isLoading => _isLoading;
 
-  AvatarController(this._aiService);
+  AvatarController(this._aiService, this._db);
 
   /// main function - handle logic
   Future<void> updateAvatarLogic({
@@ -26,22 +26,34 @@ class AvatarController extends ChangeNotifier {
     required String diary,
   }) async {
     _isLoading = true;
-    notifyListeners(); // Tell the UI to show a loading spinner
+    notifyListeners();
 
     try {
-      // 1. Call the Gemini Service
+      // 1. call Gemini service
       final result = await _aiService.getAvatarResponse(steps, sleep, diary);
-
-      // 2. Update the local state based on AI JSON
+      
       _avatarState = result['state'] ?? 'neutral';
       _coachMessage = result['message'] ?? 'Keep going!';
 
     } catch (e) {
-      _coachMessage = "Error connecting to Gemini. Check your internet!";
-      _avatarState = 'gloomy'; 
+      // 2. THE DEMO-SAVER FALLBACK
+      print("API Error: $e"); // terminal debugging
+      _avatarState = 'pending'; // state of "AI didn't answer"
+      _coachMessage = "The AI servers are currently resting. Your data is saved safely in your history!";
+      
     } finally {
+      // 3. SAVE DATA
+      await _db.insertRecord(
+        DailyRecordsCompanion.insert(
+          steps: steps,
+          sleepHours: sleep,
+          diaryNote: diary,
+          avatarState: _avatarState, // 'happy', 'tired', or 'pending'
+        ),
+      );
+
       _isLoading = false;
-      notifyListeners(); // Tell the UI to show the new data
+      notifyListeners();
     }
   }
 

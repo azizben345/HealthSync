@@ -20,9 +20,9 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AvatarController(aiService)),
+        ChangeNotifierProvider(create: (_) => AvatarController(aiService, database)),
         Provider<AppDatabase>(create: (_) => database),
-        ChangeNotifierProvider(create: (context) => HistoryController(context.read<AppDatabase>())),
+        ChangeNotifierProvider(create: (context) => HistoryController(context.read<AppDatabase>(), aiService)),
       ],
       child: const MyApp(),
     ),

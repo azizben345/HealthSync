@@ -8,7 +8,7 @@ import '../controller/history_controller.dart';
 class HistoryView extends StatelessWidget {
   const HistoryView({super.key});
 
-  // --- NEW: Function to find and show the path ---
+  // to find and show file path/location
   Future<void> _showDatabasePath(BuildContext context) async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'fyp_tracker.sqlite'));
@@ -75,6 +75,22 @@ class HistoryView extends StatelessWidget {
                       title: Text(dateStr, style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Text("Steps: ${record.steps} | Sleep: ${record.sleepHours}h\nNote: ${record.diaryNote}"),
                       isThreeLine: true,
+                      // Retry Button
+                      trailing: record.avatarState == 'pending' 
+                          ? (historyCtrl.isRetrying(record.id)
+                              // If this specific card is loading, show a small spinner
+                              ? const SizedBox(
+                                  width: 24, 
+                                  height: 24, 
+                                  child: CircularProgressIndicator(strokeWidth: 2)
+                                )
+                              // Otherwise, show the retry button
+                              : IconButton(
+                                  icon: const Icon(Icons.refresh, color: Colors.blue),
+                                  tooltip: "Retry AI Sync",
+                                  onPressed: () => historyCtrl.retryPendingAI(record),
+                                ))
+                          : null, // If it's NOT pending, show nothing on the right side
                     ),
                   ),
                 );
@@ -89,6 +105,7 @@ class HistoryView extends StatelessWidget {
       case 'proud': return Colors.purple;
       case 'tired': return Colors.orange;
       case 'gloomy': return Colors.blueGrey;
+      case 'pending': return Colors.grey;
       default: return Colors.grey;
     }
   }
@@ -99,6 +116,7 @@ class HistoryView extends StatelessWidget {
       case 'proud': return Icons.star;
       case 'tired': return Icons.bedtime;
       case 'gloomy': return Icons.sentiment_dissatisfied;
+      case 'pending': return Icons.hourglass_empty;
       default: return Icons.person;
     }
   }

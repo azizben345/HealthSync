@@ -32,6 +32,7 @@ class AppDatabase extends _$AppDatabase {
   // Inside AppDatabase class
   Future<int> deleteAllRecords() => delete(dailyRecords).go();
   Future<int> deleteRecord(int id) => (delete(dailyRecords)..where((t) => t.id.equals(id))).go();
+  Future<bool> updateRecord(DailyRecordsCompanion entry) => update(dailyRecords).replace(entry);
 }
 
 // 4. Find a safe place on the phone to store the SQLite file

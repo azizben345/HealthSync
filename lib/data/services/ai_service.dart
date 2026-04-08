@@ -28,7 +28,7 @@ class AIService {
       return jsonDecode(cleanJson) as Map<String, dynamic>;
     } catch (e) {
       print("AI Error: $e");
-      return {"state": "gloomy", "message": "I'm offline..."};
+      return {"state": "pending", "message": "I'm offline, retry later..."};
     }
   }
 }

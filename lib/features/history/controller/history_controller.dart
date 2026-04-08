@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../data/database/app_database.dart';
+import '../../../data/services/ai_service.dart';
 
 class HistoryController extends ChangeNotifier {
   final AppDatabase _db;
-  List<DailyRecord> _records = [];
+  final AIService _aiService;
 
+  List<DailyRecord> _records = [];
   // Public getter for the UI to read
   List<DailyRecord> get records => _records;
 
-  HistoryController(this._db) {
+  // a set to keep track of which specific cards are currently loading
+  final Set<int> _retryingIds = {}; 
+  bool isRetrying(int id) => _retryingIds.contains(id);
+
+  HistoryController(this._db, this._aiService) {
     // Automatically load data when the screen is first opened
     loadRecords();
   }
@@ -50,4 +56,43 @@ class HistoryController extends ChangeNotifier {
     }
     await loadRecords(); // Refresh to show the new fake data
   }
+
+  // Retry Logic
+  Future<void> retryPendingAI(DailyRecord record) async {
+    // 1. Mark this specific card as loading and update UI
+    _retryingIds.add(record.id);
+    notifyListeners();
+
+    try {
+      // 2. Ask Gemini using the saved data from that day
+      final result = await _aiService.getAvatarResponse(
+        record.steps, 
+        record.sleepHours, 
+        record.diaryNote
+      );
+      
+      final newState = result['state'] ?? 'neutral';
+
+      // 3. Update that specific row in the database with the new state
+      await _db.updateRecord(
+        DailyRecordsCompanion(
+          id: drift.Value(record.id), // Must pass the ID so Drift knows WHICH row to update
+          date: drift.Value(record.date),
+          steps: drift.Value(record.steps),
+          sleepHours: drift.Value(record.sleepHours),
+          diaryNote: drift.Value(record.diaryNote),
+          avatarState: drift.Value(newState), // The new AI result!
+        ),
+      );
+
+    } catch (e) {
+      print("Retry API Error: $e");
+      // If it fails again, it just stays 'pending', no harm done.
+    } finally {
+      // 4. Remove loading state and refresh the list
+      _retryingIds.remove(record.id);
+      await loadRecords(); 
+    }
+  }
+
 }

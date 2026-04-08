@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:healthsync_demo_v01_00/features/history/controller/history_controller.dart';
 import 'package:healthsync_demo_v01_00/features/history/view/history_view.dart';
 import 'package:provider/provider.dart';
 import '../../avatar/controller/avatar_controller.dart';
@@ -45,13 +46,20 @@ class _InputViewState extends State<InputView> {
             //         ),
             //   ),
             // ),
-            IconButton( // navigate to View History
-              icon: const Icon(Icons.history),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HistoryView()),
-                );
+            TextButton( // navigate to View History
+              child: const Text("View History"),
+              onPressed: () async {
+                // refresh the list of records each time user navigate to View History
+                // by forcing the History Controller to fetch latest data from Drift
+                await context.read<HistoryController>().loadRecords();
+
+                // navigate to the screen
+                if (context.mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HistoryView()),
+                  );
+                }
               },
             ),
             // --- AVATAR VISUAL/ANIMATION ---
