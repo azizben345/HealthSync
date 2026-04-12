@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:healthsync_demo_v01_00/features/history/controller/history_controller.dart';
-import 'package:healthsync_demo_v01_00/features/history/view/history_view.dart';
 import 'package:provider/provider.dart';
-import '../../avatar/controller/avatar_controller.dart';
 import 'package:lottie/lottie.dart';
+import '../../avatar/controller/avatar_controller.dart';
 
 class InputView extends StatefulWidget {
   const InputView({super.key});
@@ -13,134 +11,203 @@ class InputView extends StatefulWidget {
 }
 
 class _InputViewState extends State<InputView> {
-  // Local state for the sliders/text
+  // Core Metrics
   double _steps = 5000;
-  double _sleep = 7;
+  double _sleep = 7.0;
   final TextEditingController _diaryController = TextEditingController();
+
+  // NEW: Quick Habit Variables (Abstracting the "Chore")
+  String _dietQuality = 'Normal'; 
+  String _workoutType = 'Rest';
+
+  @override
+  void dispose() {
+    _diaryController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // This "watches" the controller for any changes
     final avatarCtrl = context.watch<AvatarController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("FYP Avatar Demo")),
+      appBar: AppBar(
+        title: const Text("HealthSync Dashboard", style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // --- AVATAR PLACEHOLDER ---
-            // Container(
-            //   height: 200,
-            //   width: 200,
-            //   decoration: BoxDecoration(
-            //     color: _getMoodColor(avatarCtrl.avatarState),
-            //     shape: BoxShape.circle,
-            //   ),
-            //   child: Center(
-            //     child: avatarCtrl.isLoading 
-            //       ? const CircularProgressIndicator(color: Colors.white)
-            //       : Text(
-            //           avatarCtrl.avatarState.toUpperCase(),
-            //           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            //         ),
-            //   ),
-            // ),
-            TextButton( // navigate to View History
-              child: const Text("View History"),
-              onPressed: () async {
-                // refresh the list of records each time user navigate to View History
-                // by forcing the History Controller to fetch latest data from Drift
-                await context.read<HistoryController>().loadRecords();
-
-                // navigate to the screen
-                if (context.mounted) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HistoryView()),
-                  );
-                }
-              },
-            ),
-            // --- AVATAR VISUAL/ANIMATION ---
-            SizedBox(
-              height: 200,
-              width: 200,
-              child: avatarCtrl.isLoading 
-                ? const Center(child: CircularProgressIndicator()) // Show spinner while Gemini thinks
-                : Lottie.asset(
-                    // dynamically loads the file based on Gemini's state!
-                    'assets/animations/${avatarCtrl.avatarState}.json', 
-                    fit: BoxFit.contain,
-                    // maybe add an error builder just in case you spell a file name wrong
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Text("Animation not found", style: TextStyle(color: Colors.red)),
-                      );
-                    },
-                  ),
-            ),
-            const SizedBox(height: 10),
-            Text(avatarCtrl.coachMessage, textAlign: TextAlign.center, 
-                 style: const TextStyle(fontStyle: FontStyle.italic)),
             
-            const Divider(height: 40),
-
-            // --- INPUTS ---
-            Text("Steps Walked: ${_steps.toInt()}"),
-            Slider(
-              value: _steps,
-              min: 0,
-              max: 20000,
-              onChanged: (val) => setState(() => _steps = val),
-            ),
-
-            Text("Hours Slept: ${_sleep.toStringAsFixed(1)}"),
-            Slider(
-              value: _sleep,
-              min: 0,
-              max: 12,
-              onChanged: (val) => setState(() => _sleep = val),
-            ),
-
-            TextField(
-              controller: _diaryController,
-              decoration: const InputDecoration(
-                labelText: "How was your day?",
-                border: OutlineInputBorder(),
+            // --- 1. THE HERO SECTION (Avatar & Coach) ---
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              color: Colors.blue.shade50, // Soft background for the avatar
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 180,
+                      width: 180,
+                      child: avatarCtrl.isLoading 
+                        ? const Center(child: CircularProgressIndicator()) 
+                        : Lottie.asset(
+                            'assets/animations/${avatarCtrl.avatarState}.json', 
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.person, size: 80)),
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    // AI Coach Message Bubble
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.blue.shade100),
+                      ),
+                      child: Text(
+                        "\"${avatarCtrl.coachMessage}\"",
+                        style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              maxLines: 3,
             ),
-
             const SizedBox(height: 20),
 
-            // --- THE SYNC BUTTON ---
-            ElevatedButton(
-              onPressed: avatarCtrl.isLoading 
-                ? null 
-                : () {
-                    avatarCtrl.updateAvatarLogic(
-                      steps: _steps.toInt(),
-                      sleep: _sleep,
-                      diary: _diaryController.text,
-                    );
-                  },
-              child: const Text("Sync with AI Avatar"),
+            // --- 2. CORE METRICS CARD ---
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Daily Metrics", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Divider(),
+                    Text("Steps: ${_steps.toInt()}"),
+                    Slider(
+                      value: _steps,
+                      min: 0,
+                      max: 20000,
+                      divisions: 20,
+                      label: _steps.toInt().toString(),
+                      onChanged: (val) => setState(() => _steps = val),
+                    ),
+                    Text("Sleep: ${_sleep.toStringAsFixed(1)} hours"),
+                    Slider(
+                      value: _sleep,
+                      min: 0,
+                      max: 12,
+                      divisions: 24,
+                      label: _sleep.toStringAsFixed(1),
+                      onChanged: (val) => setState(() => _sleep = val),
+                    ),
+                  ],
+                ),
+              ),
             ),
+            const SizedBox(height: 16),
+
+            // --- 3. QUICK HABITS CARD (Diet & Workout) ---
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Quick Habits", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Divider(),
+                    const Text("Diet Quality today?"),
+                    const SizedBox(height: 8),
+                    // Segmented Button looks very professional
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'Cheat Day', label: Text('Cheat Day')),
+                        ButtonSegment(value: 'Normal', label: Text('Normal')),
+                        ButtonSegment(value: 'Healthy', label: Text('Healthy')),
+                      ],
+                      selected: {_dietQuality},
+                      onSelectionChanged: (Set<String> newSelection) {
+                        setState(() => _dietQuality = newSelection.first);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    const Text("Workout today?"),
+                    const SizedBox(height: 8),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'Rest', label: Text('Rest')),
+                        ButtonSegment(value: 'Cardio', label: Text('Cardio')),
+                        ButtonSegment(value: 'Strength', label: Text('Strength')),
+                      ],
+                      selected: {_workoutType},
+                      onSelectionChanged: (Set<String> newSelection) {
+                        setState(() => _workoutType = newSelection.first);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // --- 4. THE JOURNAL CARD ---
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Journal", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Divider(),
+                    TextField(
+                      controller: _diaryController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        hintText: "How are you feeling today?",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // --- 5. THE SYNC BUTTON ---
+            FilledButton.icon(
+              icon: avatarCtrl.isLoading 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Icon(Icons.sync),
+              label: Text(avatarCtrl.isLoading ? "Analyzing..." : "Sync with AI Avatar"),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              onPressed: avatarCtrl.isLoading ? null : () {
+                // For now, we still only pass the 3 original variables.
+                // We will add Diet and Workout to the DB in the next step!
+                avatarCtrl.updateAvatarLogic(
+                  steps: _steps.toInt(),
+                  sleep: _sleep,
+                  diary: _diaryController.text,
+                );
+              },
+            ),
+            const SizedBox(height: 40), // Bottom padding for scrolling
           ],
         ),
       ),
     );
-  }
-
-  // Simple logic to change color based on state for now
-  Color _getMoodColor(String state) {
-    switch (state.toLowerCase()) {
-      case 'happy': return Colors.green;
-      case 'tired': return Colors.orange;
-      case 'gloomy': return Colors.blueGrey;
-      case 'proud': return Colors.purple;
-      default: return Colors.grey;
-    }
   }
 }

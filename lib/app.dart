@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'features/tracker/view/input_view.dart';
+import 'features/home/view/main_navigation.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -9,7 +10,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'FYP Avatar Tracker',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      home: const InputView(), // Start with our demo screen
+      // home: const InputView(), // demo screen
+      home: const MainNavigation(), 
     );
   }
 }

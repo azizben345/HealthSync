@@ -12,7 +12,10 @@ class AIService {
 
   Future<Map<String, dynamic>> getAvatarResponse(int steps, double sleep, String diary) async {
     final prompt = """
-      You are an AI character engine. Analyze the user's data and return creative message. Return ONLY JSON.
+      You are an AI character engine. 
+      Analyze the user's data and return creative message. 
+      Only relate data to note if relevant.
+      Return ONLY JSON.
       Data: Steps: $steps, Sleep: $sleep, Note: "$diary"
       Return format: {"state": "happy"|"tired"|"gloomy"|"proud", "message": "string"}
     """;
