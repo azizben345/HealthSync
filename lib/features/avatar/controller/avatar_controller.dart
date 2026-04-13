@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import '../../../data/services/ai_service.dart';
 import '../../../data/database/app_database.dart';
@@ -24,13 +25,15 @@ class AvatarController extends ChangeNotifier {
     required int steps,
     required double sleep,
     required String diary,
+    required String diet,     
+    required String workout,
   }) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // 1. call Gemini service
-      final result = await _aiService.getAvatarResponse(steps, sleep, diary);
+      // 1. call Gemini service and send data via arguments
+      final result = await _aiService.getAvatarResponse(steps, sleep, diary, diet, workout);
       
       _avatarState = result['state'] ?? 'neutral';
       _coachMessage = result['message'] ?? 'Keep going!';
@@ -39,7 +42,7 @@ class AvatarController extends ChangeNotifier {
       // 2. THE DEMO-SAVER FALLBACK
       print("API Error: $e"); // terminal debugging
       _avatarState = 'pending'; // state of "AI didn't answer"
-      _coachMessage = "The AI servers are currently resting. Your data is saved safely in your history!";
+      _coachMessage = "The AI servers are currently resting. Your data is saved safely in your history.";
       
     } finally {
       // 3. SAVE DATA
@@ -49,6 +52,8 @@ class AvatarController extends ChangeNotifier {
           sleepHours: sleep,
           diaryNote: diary,
           avatarState: _avatarState, // 'happy', 'tired', or 'pending'
+          dietQuality: drift.Value(diet),       
+          workoutType: drift.Value(workout),
         ),
       );
 

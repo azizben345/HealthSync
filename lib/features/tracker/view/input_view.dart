@@ -15,8 +15,6 @@ class _InputViewState extends State<InputView> {
   double _steps = 5000;
   double _sleep = 7.0;
   final TextEditingController _diaryController = TextEditingController();
-
-  // NEW: Quick Habit Variables (Abstracting the "Chore")
   String _dietQuality = 'Normal'; 
   String _workoutType = 'Rest';
 
@@ -201,6 +199,8 @@ class _InputViewState extends State<InputView> {
                   steps: _steps.toInt(),
                   sleep: _sleep,
                   diary: _diaryController.text,
+                  diet: _dietQuality,
+                  workout: _workoutType,
                 );
               },
             ),

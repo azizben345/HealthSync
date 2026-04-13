@@ -15,6 +15,8 @@ class DailyRecords extends Table {
   RealColumn get sleepHours => real()();
   TextColumn get diaryNote => text()();
   TextColumn get avatarState => text()();
+  TextColumn get dietQuality => text().withDefault(const Constant('Normal'))();
+  TextColumn get workoutType => text().withDefault(const Constant('Rest'))();
 }
 
 // 2. Initialize the Database
@@ -22,7 +24,7 @@ class DailyRecords extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
-  // Bump this number if you ever change the table columns later
+  // Bump this number if ever need to change the table columns later
   @override
   int get schemaVersion => 1;
 

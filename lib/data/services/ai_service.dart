@@ -10,13 +10,19 @@ class AIService {
     generationConfig: GenerationConfig(responseMimeType: 'application/json'),
   );
 
-  Future<Map<String, dynamic>> getAvatarResponse(int steps, double sleep, String diary) async {
+  Future<Map<String, dynamic>> getAvatarResponse(
+    int steps, 
+    double sleep, 
+    String diary, 
+    String diet, 
+    String workout
+  ) async {
     final prompt = """
       You are an AI character engine. 
       Analyze the user's data and return creative message. 
       Only relate data to note if relevant.
       Return ONLY JSON.
-      Data: Steps: $steps, Sleep: $sleep, Note: "$diary"
+      Data: Steps: $steps, Sleep: $sleep, Diet: "$diet", Workout: "$workout", Note: "$diary"
       Return format: {"state": "happy"|"tired"|"gloomy"|"proud", "message": "string"}
     """;
 

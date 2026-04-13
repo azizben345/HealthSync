@@ -74,6 +74,30 @@ class $DailyRecordsTable extends DailyRecords
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _dietQualityMeta = const VerificationMeta(
+    'dietQuality',
+  );
+  @override
+  late final GeneratedColumn<String> dietQuality = GeneratedColumn<String>(
+    'diet_quality',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Normal'),
+  );
+  static const VerificationMeta _workoutTypeMeta = const VerificationMeta(
+    'workoutType',
+  );
+  @override
+  late final GeneratedColumn<String> workoutType = GeneratedColumn<String>(
+    'workout_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Rest'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -82,6 +106,8 @@ class $DailyRecordsTable extends DailyRecords
     sleepHours,
     diaryNote,
     avatarState,
+    dietQuality,
+    workoutType,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -139,6 +165,24 @@ class $DailyRecordsTable extends DailyRecords
     } else if (isInserting) {
       context.missing(_avatarStateMeta);
     }
+    if (data.containsKey('diet_quality')) {
+      context.handle(
+        _dietQualityMeta,
+        dietQuality.isAcceptableOrUnknown(
+          data['diet_quality']!,
+          _dietQualityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('workout_type')) {
+      context.handle(
+        _workoutTypeMeta,
+        workoutType.isAcceptableOrUnknown(
+          data['workout_type']!,
+          _workoutTypeMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -172,6 +216,14 @@ class $DailyRecordsTable extends DailyRecords
         DriftSqlType.string,
         data['${effectivePrefix}avatar_state'],
       )!,
+      dietQuality: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}diet_quality'],
+      )!,
+      workoutType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}workout_type'],
+      )!,
     );
   }
 
@@ -188,6 +240,8 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
   final double sleepHours;
   final String diaryNote;
   final String avatarState;
+  final String dietQuality;
+  final String workoutType;
   const DailyRecord({
     required this.id,
     required this.date,
@@ -195,6 +249,8 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     required this.sleepHours,
     required this.diaryNote,
     required this.avatarState,
+    required this.dietQuality,
+    required this.workoutType,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -205,6 +261,8 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     map['sleep_hours'] = Variable<double>(sleepHours);
     map['diary_note'] = Variable<String>(diaryNote);
     map['avatar_state'] = Variable<String>(avatarState);
+    map['diet_quality'] = Variable<String>(dietQuality);
+    map['workout_type'] = Variable<String>(workoutType);
     return map;
   }
 
@@ -216,6 +274,8 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
       sleepHours: Value(sleepHours),
       diaryNote: Value(diaryNote),
       avatarState: Value(avatarState),
+      dietQuality: Value(dietQuality),
+      workoutType: Value(workoutType),
     );
   }
 
@@ -231,6 +291,8 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
       sleepHours: serializer.fromJson<double>(json['sleepHours']),
       diaryNote: serializer.fromJson<String>(json['diaryNote']),
       avatarState: serializer.fromJson<String>(json['avatarState']),
+      dietQuality: serializer.fromJson<String>(json['dietQuality']),
+      workoutType: serializer.fromJson<String>(json['workoutType']),
     );
   }
   @override
@@ -243,6 +305,8 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
       'sleepHours': serializer.toJson<double>(sleepHours),
       'diaryNote': serializer.toJson<String>(diaryNote),
       'avatarState': serializer.toJson<String>(avatarState),
+      'dietQuality': serializer.toJson<String>(dietQuality),
+      'workoutType': serializer.toJson<String>(workoutType),
     };
   }
 
@@ -253,6 +317,8 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     double? sleepHours,
     String? diaryNote,
     String? avatarState,
+    String? dietQuality,
+    String? workoutType,
   }) => DailyRecord(
     id: id ?? this.id,
     date: date ?? this.date,
@@ -260,6 +326,8 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     sleepHours: sleepHours ?? this.sleepHours,
     diaryNote: diaryNote ?? this.diaryNote,
     avatarState: avatarState ?? this.avatarState,
+    dietQuality: dietQuality ?? this.dietQuality,
+    workoutType: workoutType ?? this.workoutType,
   );
   DailyRecord copyWithCompanion(DailyRecordsCompanion data) {
     return DailyRecord(
@@ -273,6 +341,12 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
       avatarState: data.avatarState.present
           ? data.avatarState.value
           : this.avatarState,
+      dietQuality: data.dietQuality.present
+          ? data.dietQuality.value
+          : this.dietQuality,
+      workoutType: data.workoutType.present
+          ? data.workoutType.value
+          : this.workoutType,
     );
   }
 
@@ -284,14 +358,28 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
           ..write('steps: $steps, ')
           ..write('sleepHours: $sleepHours, ')
           ..write('diaryNote: $diaryNote, ')
-          ..write('avatarState: $avatarState')
+          ..write('avatarState: $avatarState, ')
+          ..write('dietQuality: $dietQuality, ')
+          ..write('workoutType: $workoutType')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, date, steps, sleepHours, diaryNote, avatarState);
+  int get hashCode => Object.hash(
+    id,
+    date,
+    steps,
+    sleepHours,
+    diaryNote,
+    avatarState,
+    dietQuality,
+    workoutType,
+  );
+
+  // String get diet => null;
+
+  // String get workout => null;
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -301,7 +389,9 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
           other.steps == this.steps &&
           other.sleepHours == this.sleepHours &&
           other.diaryNote == this.diaryNote &&
-          other.avatarState == this.avatarState);
+          other.avatarState == this.avatarState &&
+          other.dietQuality == this.dietQuality &&
+          other.workoutType == this.workoutType);
 }
 
 class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
@@ -311,6 +401,8 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
   final Value<double> sleepHours;
   final Value<String> diaryNote;
   final Value<String> avatarState;
+  final Value<String> dietQuality;
+  final Value<String> workoutType;
   const DailyRecordsCompanion({
     this.id = const Value.absent(),
     this.date = const Value.absent(),
@@ -318,6 +410,8 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     this.sleepHours = const Value.absent(),
     this.diaryNote = const Value.absent(),
     this.avatarState = const Value.absent(),
+    this.dietQuality = const Value.absent(),
+    this.workoutType = const Value.absent(),
   });
   DailyRecordsCompanion.insert({
     this.id = const Value.absent(),
@@ -326,6 +420,8 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     required double sleepHours,
     required String diaryNote,
     required String avatarState,
+    this.dietQuality = const Value.absent(),
+    this.workoutType = const Value.absent(),
   }) : steps = Value(steps),
        sleepHours = Value(sleepHours),
        diaryNote = Value(diaryNote),
@@ -337,6 +433,8 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     Expression<double>? sleepHours,
     Expression<String>? diaryNote,
     Expression<String>? avatarState,
+    Expression<String>? dietQuality,
+    Expression<String>? workoutType,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -345,6 +443,8 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
       if (sleepHours != null) 'sleep_hours': sleepHours,
       if (diaryNote != null) 'diary_note': diaryNote,
       if (avatarState != null) 'avatar_state': avatarState,
+      if (dietQuality != null) 'diet_quality': dietQuality,
+      if (workoutType != null) 'workout_type': workoutType,
     });
   }
 
@@ -355,6 +455,8 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     Value<double>? sleepHours,
     Value<String>? diaryNote,
     Value<String>? avatarState,
+    Value<String>? dietQuality,
+    Value<String>? workoutType,
   }) {
     return DailyRecordsCompanion(
       id: id ?? this.id,
@@ -363,6 +465,8 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
       sleepHours: sleepHours ?? this.sleepHours,
       diaryNote: diaryNote ?? this.diaryNote,
       avatarState: avatarState ?? this.avatarState,
+      dietQuality: dietQuality ?? this.dietQuality,
+      workoutType: workoutType ?? this.workoutType,
     );
   }
 
@@ -387,6 +491,12 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     if (avatarState.present) {
       map['avatar_state'] = Variable<String>(avatarState.value);
     }
+    if (dietQuality.present) {
+      map['diet_quality'] = Variable<String>(dietQuality.value);
+    }
+    if (workoutType.present) {
+      map['workout_type'] = Variable<String>(workoutType.value);
+    }
     return map;
   }
 
@@ -398,7 +508,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
           ..write('steps: $steps, ')
           ..write('sleepHours: $sleepHours, ')
           ..write('diaryNote: $diaryNote, ')
-          ..write('avatarState: $avatarState')
+          ..write('avatarState: $avatarState, ')
+          ..write('dietQuality: $dietQuality, ')
+          ..write('workoutType: $workoutType')
           ..write(')'))
         .toString();
   }
@@ -423,6 +535,8 @@ typedef $$DailyRecordsTableCreateCompanionBuilder =
       required double sleepHours,
       required String diaryNote,
       required String avatarState,
+      Value<String> dietQuality,
+      Value<String> workoutType,
     });
 typedef $$DailyRecordsTableUpdateCompanionBuilder =
     DailyRecordsCompanion Function({
@@ -432,6 +546,8 @@ typedef $$DailyRecordsTableUpdateCompanionBuilder =
       Value<double> sleepHours,
       Value<String> diaryNote,
       Value<String> avatarState,
+      Value<String> dietQuality,
+      Value<String> workoutType,
     });
 
 class $$DailyRecordsTableFilterComposer
@@ -470,6 +586,16 @@ class $$DailyRecordsTableFilterComposer
 
   ColumnFilters<String> get avatarState => $composableBuilder(
     column: $table.avatarState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dietQuality => $composableBuilder(
+    column: $table.dietQuality,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get workoutType => $composableBuilder(
+    column: $table.workoutType,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -512,6 +638,16 @@ class $$DailyRecordsTableOrderingComposer
     column: $table.avatarState,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get dietQuality => $composableBuilder(
+    column: $table.dietQuality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get workoutType => $composableBuilder(
+    column: $table.workoutType,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DailyRecordsTableAnnotationComposer
@@ -542,6 +678,16 @@ class $$DailyRecordsTableAnnotationComposer
 
   GeneratedColumn<String> get avatarState => $composableBuilder(
     column: $table.avatarState,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get dietQuality => $composableBuilder(
+    column: $table.dietQuality,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get workoutType => $composableBuilder(
+    column: $table.workoutType,
     builder: (column) => column,
   );
 }
@@ -583,6 +729,8 @@ class $$DailyRecordsTableTableManager
                 Value<double> sleepHours = const Value.absent(),
                 Value<String> diaryNote = const Value.absent(),
                 Value<String> avatarState = const Value.absent(),
+                Value<String> dietQuality = const Value.absent(),
+                Value<String> workoutType = const Value.absent(),
               }) => DailyRecordsCompanion(
                 id: id,
                 date: date,
@@ -590,6 +738,8 @@ class $$DailyRecordsTableTableManager
                 sleepHours: sleepHours,
                 diaryNote: diaryNote,
                 avatarState: avatarState,
+                dietQuality: dietQuality,
+                workoutType: workoutType,
               ),
           createCompanionCallback:
               ({
@@ -599,6 +749,8 @@ class $$DailyRecordsTableTableManager
                 required double sleepHours,
                 required String diaryNote,
                 required String avatarState,
+                Value<String> dietQuality = const Value.absent(),
+                Value<String> workoutType = const Value.absent(),
               }) => DailyRecordsCompanion.insert(
                 id: id,
                 date: date,
@@ -606,6 +758,8 @@ class $$DailyRecordsTableTableManager
                 sleepHours: sleepHours,
                 diaryNote: diaryNote,
                 avatarState: avatarState,
+                dietQuality: dietQuality,
+                workoutType: workoutType,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

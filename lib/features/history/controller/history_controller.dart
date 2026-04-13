@@ -68,7 +68,9 @@ class HistoryController extends ChangeNotifier {
       final result = await _aiService.getAvatarResponse(
         record.steps, 
         record.sleepHours, 
-        record.diaryNote
+        record.diaryNote,
+        record.dietQuality,
+        record.workoutType
       );
       
       final newState = result['state'] ?? 'neutral';
