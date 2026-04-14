@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:healthsync_demo_v01_00/data/database/app_database.dart';
 import 'package:provider/provider.dart';
-import 'package:fl_chart/fl_chart.dart'; // NEW: Import the chart library
+import 'package:fl_chart/fl_chart.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -15,8 +15,8 @@ class HistoryView extends StatefulWidget {
 }
 
 class _HistoryViewState extends State<HistoryView> {
-  // NEW: State variable to track which view we are looking at
-  String _viewMode = 'list'; 
+  // default view of History tab
+  String _viewMode = 'map'; 
 
   Future<void> _showDatabasePath(BuildContext context) async {
     final dbFolder = await getApplicationDocumentsDirectory();
@@ -56,13 +56,13 @@ class _HistoryViewState extends State<HistoryView> {
       ),
       body: Column(
         children: [
-          // --- NEW: The Toggle Button ---
+          // Toggle Button
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: SegmentedButton<String>(
               segments: const [
-                ButtonSegment(value: 'list', label: Text('List View'), icon: Icon(Icons.list)),
                 ButtonSegment(value: 'chart', label: Text('Analytics'), icon: Icon(Icons.bar_chart)),
+                ButtonSegment(value: 'list', label: Text('List View'), icon: Icon(Icons.list)),
               ],
               selected: {_viewMode},
               onSelectionChanged: (Set<String> newSelection) {
@@ -122,7 +122,7 @@ class _HistoryViewState extends State<HistoryView> {
   }
 
   // Bar Chart
-  // --- 2. THE DASHBOARD VIEW (Google Fit Style) ---
+  // --- DASHBOARD VIEW (Google Fit Style) ---
   Widget _buildChartView(HistoryController historyCtrl) {
     // Grab up to 7 days of data, chronologically (oldest to newest)
     final recentRecords = historyCtrl.records.take(7).toList().reversed.toList();

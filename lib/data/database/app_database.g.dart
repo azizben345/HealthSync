@@ -376,10 +376,6 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     dietQuality,
     workoutType,
   );
-
-  // String get diet => null;
-
-  // String get workout => null;
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -516,15 +512,323 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
   }
 }
 
+class $ChatHistoryTable extends ChatHistory
+    with TableInfo<$ChatHistoryTable, ChatHistoryData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChatHistoryTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _textMessageMeta = const VerificationMeta(
+    'textMessage',
+  );
+  @override
+  late final GeneratedColumn<String> textMessage = GeneratedColumn<String>(
+    'text_message',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isUserMeta = const VerificationMeta('isUser');
+  @override
+  late final GeneratedColumn<bool> isUser = GeneratedColumn<bool>(
+    'is_user',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_user" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _timestampMeta = const VerificationMeta(
+    'timestamp',
+  );
+  @override
+  late final GeneratedColumn<DateTime> timestamp = GeneratedColumn<DateTime>(
+    'timestamp',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, textMessage, isUser, timestamp];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'chat_history';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ChatHistoryData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('text_message')) {
+      context.handle(
+        _textMessageMeta,
+        textMessage.isAcceptableOrUnknown(
+          data['text_message']!,
+          _textMessageMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_textMessageMeta);
+    }
+    if (data.containsKey('is_user')) {
+      context.handle(
+        _isUserMeta,
+        isUser.isAcceptableOrUnknown(data['is_user']!, _isUserMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_isUserMeta);
+    }
+    if (data.containsKey('timestamp')) {
+      context.handle(
+        _timestampMeta,
+        timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ChatHistoryData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ChatHistoryData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      textMessage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}text_message'],
+      )!,
+      isUser: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_user'],
+      )!,
+      timestamp: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}timestamp'],
+      )!,
+    );
+  }
+
+  @override
+  $ChatHistoryTable createAlias(String alias) {
+    return $ChatHistoryTable(attachedDatabase, alias);
+  }
+}
+
+class ChatHistoryData extends DataClass implements Insertable<ChatHistoryData> {
+  final int id;
+  final String textMessage;
+  final bool isUser;
+  final DateTime timestamp;
+  const ChatHistoryData({
+    required this.id,
+    required this.textMessage,
+    required this.isUser,
+    required this.timestamp,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['text_message'] = Variable<String>(textMessage);
+    map['is_user'] = Variable<bool>(isUser);
+    map['timestamp'] = Variable<DateTime>(timestamp);
+    return map;
+  }
+
+  ChatHistoryCompanion toCompanion(bool nullToAbsent) {
+    return ChatHistoryCompanion(
+      id: Value(id),
+      textMessage: Value(textMessage),
+      isUser: Value(isUser),
+      timestamp: Value(timestamp),
+    );
+  }
+
+  factory ChatHistoryData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ChatHistoryData(
+      id: serializer.fromJson<int>(json['id']),
+      textMessage: serializer.fromJson<String>(json['textMessage']),
+      isUser: serializer.fromJson<bool>(json['isUser']),
+      timestamp: serializer.fromJson<DateTime>(json['timestamp']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'textMessage': serializer.toJson<String>(textMessage),
+      'isUser': serializer.toJson<bool>(isUser),
+      'timestamp': serializer.toJson<DateTime>(timestamp),
+    };
+  }
+
+  ChatHistoryData copyWith({
+    int? id,
+    String? textMessage,
+    bool? isUser,
+    DateTime? timestamp,
+  }) => ChatHistoryData(
+    id: id ?? this.id,
+    textMessage: textMessage ?? this.textMessage,
+    isUser: isUser ?? this.isUser,
+    timestamp: timestamp ?? this.timestamp,
+  );
+  ChatHistoryData copyWithCompanion(ChatHistoryCompanion data) {
+    return ChatHistoryData(
+      id: data.id.present ? data.id.value : this.id,
+      textMessage: data.textMessage.present
+          ? data.textMessage.value
+          : this.textMessage,
+      isUser: data.isUser.present ? data.isUser.value : this.isUser,
+      timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatHistoryData(')
+          ..write('id: $id, ')
+          ..write('textMessage: $textMessage, ')
+          ..write('isUser: $isUser, ')
+          ..write('timestamp: $timestamp')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, textMessage, isUser, timestamp);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ChatHistoryData &&
+          other.id == this.id &&
+          other.textMessage == this.textMessage &&
+          other.isUser == this.isUser &&
+          other.timestamp == this.timestamp);
+}
+
+class ChatHistoryCompanion extends UpdateCompanion<ChatHistoryData> {
+  final Value<int> id;
+  final Value<String> textMessage;
+  final Value<bool> isUser;
+  final Value<DateTime> timestamp;
+  const ChatHistoryCompanion({
+    this.id = const Value.absent(),
+    this.textMessage = const Value.absent(),
+    this.isUser = const Value.absent(),
+    this.timestamp = const Value.absent(),
+  });
+  ChatHistoryCompanion.insert({
+    this.id = const Value.absent(),
+    required String textMessage,
+    required bool isUser,
+    this.timestamp = const Value.absent(),
+  }) : textMessage = Value(textMessage),
+       isUser = Value(isUser);
+  static Insertable<ChatHistoryData> custom({
+    Expression<int>? id,
+    Expression<String>? textMessage,
+    Expression<bool>? isUser,
+    Expression<DateTime>? timestamp,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (textMessage != null) 'text_message': textMessage,
+      if (isUser != null) 'is_user': isUser,
+      if (timestamp != null) 'timestamp': timestamp,
+    });
+  }
+
+  ChatHistoryCompanion copyWith({
+    Value<int>? id,
+    Value<String>? textMessage,
+    Value<bool>? isUser,
+    Value<DateTime>? timestamp,
+  }) {
+    return ChatHistoryCompanion(
+      id: id ?? this.id,
+      textMessage: textMessage ?? this.textMessage,
+      isUser: isUser ?? this.isUser,
+      timestamp: timestamp ?? this.timestamp,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (textMessage.present) {
+      map['text_message'] = Variable<String>(textMessage.value);
+    }
+    if (isUser.present) {
+      map['is_user'] = Variable<bool>(isUser.value);
+    }
+    if (timestamp.present) {
+      map['timestamp'] = Variable<DateTime>(timestamp.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChatHistoryCompanion(')
+          ..write('id: $id, ')
+          ..write('textMessage: $textMessage, ')
+          ..write('isUser: $isUser, ')
+          ..write('timestamp: $timestamp')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $DailyRecordsTable dailyRecords = $DailyRecordsTable(this);
+  late final $ChatHistoryTable chatHistory = $ChatHistoryTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [dailyRecords];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    dailyRecords,
+    chatHistory,
+  ];
 }
 
 typedef $$DailyRecordsTableCreateCompanionBuilder =
@@ -786,10 +1090,189 @@ typedef $$DailyRecordsTableProcessedTableManager =
       DailyRecord,
       PrefetchHooks Function()
     >;
+typedef $$ChatHistoryTableCreateCompanionBuilder =
+    ChatHistoryCompanion Function({
+      Value<int> id,
+      required String textMessage,
+      required bool isUser,
+      Value<DateTime> timestamp,
+    });
+typedef $$ChatHistoryTableUpdateCompanionBuilder =
+    ChatHistoryCompanion Function({
+      Value<int> id,
+      Value<String> textMessage,
+      Value<bool> isUser,
+      Value<DateTime> timestamp,
+    });
+
+class $$ChatHistoryTableFilterComposer
+    extends Composer<_$AppDatabase, $ChatHistoryTable> {
+  $$ChatHistoryTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get textMessage => $composableBuilder(
+    column: $table.textMessage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isUser => $composableBuilder(
+    column: $table.isUser,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get timestamp => $composableBuilder(
+    column: $table.timestamp,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ChatHistoryTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChatHistoryTable> {
+  $$ChatHistoryTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get textMessage => $composableBuilder(
+    column: $table.textMessage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isUser => $composableBuilder(
+    column: $table.isUser,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get timestamp => $composableBuilder(
+    column: $table.timestamp,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ChatHistoryTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChatHistoryTable> {
+  $$ChatHistoryTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get textMessage => $composableBuilder(
+    column: $table.textMessage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isUser =>
+      $composableBuilder(column: $table.isUser, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get timestamp =>
+      $composableBuilder(column: $table.timestamp, builder: (column) => column);
+}
+
+class $$ChatHistoryTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChatHistoryTable,
+          ChatHistoryData,
+          $$ChatHistoryTableFilterComposer,
+          $$ChatHistoryTableOrderingComposer,
+          $$ChatHistoryTableAnnotationComposer,
+          $$ChatHistoryTableCreateCompanionBuilder,
+          $$ChatHistoryTableUpdateCompanionBuilder,
+          (
+            ChatHistoryData,
+            BaseReferences<_$AppDatabase, $ChatHistoryTable, ChatHistoryData>,
+          ),
+          ChatHistoryData,
+          PrefetchHooks Function()
+        > {
+  $$ChatHistoryTableTableManager(_$AppDatabase db, $ChatHistoryTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ChatHistoryTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChatHistoryTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChatHistoryTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> textMessage = const Value.absent(),
+                Value<bool> isUser = const Value.absent(),
+                Value<DateTime> timestamp = const Value.absent(),
+              }) => ChatHistoryCompanion(
+                id: id,
+                textMessage: textMessage,
+                isUser: isUser,
+                timestamp: timestamp,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String textMessage,
+                required bool isUser,
+                Value<DateTime> timestamp = const Value.absent(),
+              }) => ChatHistoryCompanion.insert(
+                id: id,
+                textMessage: textMessage,
+                isUser: isUser,
+                timestamp: timestamp,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ChatHistoryTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChatHistoryTable,
+      ChatHistoryData,
+      $$ChatHistoryTableFilterComposer,
+      $$ChatHistoryTableOrderingComposer,
+      $$ChatHistoryTableAnnotationComposer,
+      $$ChatHistoryTableCreateCompanionBuilder,
+      $$ChatHistoryTableUpdateCompanionBuilder,
+      (
+        ChatHistoryData,
+        BaseReferences<_$AppDatabase, $ChatHistoryTable, ChatHistoryData>,
+      ),
+      ChatHistoryData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
   $$DailyRecordsTableTableManager get dailyRecords =>
       $$DailyRecordsTableTableManager(_db, _db.dailyRecords);
+  $$ChatHistoryTableTableManager get chatHistory =>
+      $$ChatHistoryTableTableManager(_db, _db.chatHistory);
 }

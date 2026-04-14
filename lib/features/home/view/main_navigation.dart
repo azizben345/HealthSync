@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:healthsync_demo_v01_00/features/chat/view/chat_view.dart';
 import 'package:provider/provider.dart';
 import 'package:healthsync_demo_v01_00/features/history/controller/history_controller.dart';
 import '../../tracker/view/input_view.dart';
@@ -18,12 +19,13 @@ class _MainNavigationState extends State<MainNavigation> {
   // No functions are allowed in this list!
   final List<Widget> _screens = [
     const InputView(),     // left tab (Index 0)
-    const HistoryView(),   // middle tab (Index 1) - Replaced the function with the Widget
-    const Scaffold(        // right tab (Index 2)
-      body: Center(
-        child: Text("💬 AI Coach Chatbot\n(Coming Soon!)", textAlign: TextAlign.center),
-      ),
-    ), 
+    const HistoryView(),   // middle tab (Index 1)
+    const ChatView(),      // right tab (Index 2)
+    // const Scaffold(        // right tab (Index 2) - placeholder view
+    //   body: Center(
+    //     child: Text("💬 AI Coach Chatbot\n(Coming Soon!)", textAlign: TextAlign.center),
+    //   ),
+    // ), 
   ];
 
   @override

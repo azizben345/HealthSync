@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'features/tracker/view/input_view.dart';
+// import 'features/tracker/view/input_view.dart';
 import 'features/home/view/main_navigation.dart';
 
 class MyApp extends StatelessWidget {

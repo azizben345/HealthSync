@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:healthsync_demo_v01_00/app.dart';
+import 'package:healthsync_demo_v01_00/features/chat/controller/chat_controller.dart';
 import 'data/services/ai_service.dart';
 import 'features/avatar/controller/avatar_controller.dart';
 import 'package:provider/provider.dart'; // use Provider for state
@@ -20,9 +21,13 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AvatarController(aiService, database)),
+        ChangeNotifierProvider(create: (_) 
+          => AvatarController(aiService, database)),
         Provider<AppDatabase>(create: (_) => database),
-        ChangeNotifierProvider(create: (context) => HistoryController(context.read<AppDatabase>(), aiService)),
+        ChangeNotifierProvider(create: (context) 
+          => HistoryController(context.read<AppDatabase>(), aiService)),
+        ChangeNotifierProvider(create: (context) 
+          => ChatController(aiService, context.read<AppDatabase>())),
       ],
       child: const MyApp(),
     ),

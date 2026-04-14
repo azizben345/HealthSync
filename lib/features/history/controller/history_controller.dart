@@ -40,21 +40,27 @@ class HistoryController extends ChangeNotifier {
       DailyRecordsCompanion.insert(
         date: drift.Value(DateTime.now().subtract(const Duration(days: 1))),
         steps: 3000, sleepHours: 4.5, diaryNote: "Rough night and day.", avatarState: "tired",
+        dietQuality: const drift.Value("Normal"), 
+        workoutType: const drift.Value("Cardio"), 
       ),
       DailyRecordsCompanion.insert(
         date: drift.Value(DateTime.now().subtract(const Duration(days: 2))),
         steps: 12000, sleepHours: 8.0, diaryNote: "Great workout!", avatarState: "proud",
+        dietQuality: const drift.Value("Cheat Day"), 
+        workoutType: const drift.Value("Strength"),
       ),
       DailyRecordsCompanion.insert(
         date: drift.Value(DateTime.now().subtract(const Duration(days: 3))),
         steps: 8000, sleepHours: 7.0, diaryNote: "Normal day.", avatarState: "happy",
+        dietQuality: const drift.Value("Normal"), 
+        workoutType: const drift.Value("Cardio"),
       ),
     ];
 
     for (var entry in mockEntries) {
       await _db.insertRecord(entry);
     }
-    await loadRecords(); // Refresh to show the new fake data
+    await loadRecords(); // refresh to update new mock data
   }
 
   // Retry Logic

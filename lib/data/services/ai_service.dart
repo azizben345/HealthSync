@@ -1,5 +1,6 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'dart:convert'; 
+import 'dart:convert';
+import 'package:google_generative_ai/google_generative_ai.dart' as drift; 
 
 class AIService {
   final GenerativeModel _model;
@@ -38,6 +39,38 @@ class AIService {
     } catch (e) {
       print("AI Error: $e");
       return {"state": "pending", "message": "I'm offline, retry later..."};
+    }
+  }
+
+  // NEW: A variable to hold the ongoing conversation memory
+  late drift.ChatSession _chatSession; // Assuming you are using google_generative_ai
+
+  // 1. Initialize the chat with the database history
+  Future<void> startNewChatSession(String systemContext, String apiKey) async {
+    // gemini-1.5-flash is the best model for fast, multi-turn chat
+    final model = GenerativeModel(
+      model: 'gemini-2.5-flash',
+      apiKey: apiKey,
+      // We feed it the SQLite data as a hidden system instruction so it knows the user!
+      systemInstruction: Content.system(
+        "You are HealthSync, an empathetic AI health coach. "
+        "Here is the user's recent health data: $systemContext\n"
+        "Keep your answers concise, supportive, and reference their data when appropriate."
+      ),
+    );
+
+    // This creates a blank chat history, ready for the user's first message
+    _chatSession = model.startChat();
+  }
+
+  // 2. Send a single message to the existing session
+  Future<String> sendChatMessage(String message) async {
+    try {
+      final response = await _chatSession.sendMessage(Content.text(message));
+      return response.text ?? "I'm having trouble thinking right now.";
+    } catch (e) {
+      print("Chat API Error: $e");
+      return "I seem to have lost my connection. Can we try again later?";
     }
   }
 }

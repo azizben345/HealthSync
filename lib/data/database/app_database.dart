@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 // Drift will auto create 
 part 'app_database.g.dart';
 
-// 1. Define the Blueprint (Table)
+// Input Data
 class DailyRecords extends Table {
   IntColumn get id => integer().autoIncrement()();
   DateTimeColumn get date => dateTime().withDefault(currentDateAndTime)();
@@ -19,22 +19,34 @@ class DailyRecords extends Table {
   TextColumn get workoutType => text().withDefault(const Constant('Rest'))();
 }
 
+// Chatbot History
+class ChatHistory extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get textMessage => text()();
+  BoolColumn get isUser => boolean()();
+  DateTimeColumn get timestamp => dateTime().withDefault(currentDateAndTime)();
+}
+
 // 2. Initialize the Database
-@DriftDatabase(tables: [DailyRecords])
+@DriftDatabase(tables: [DailyRecords, ChatHistory])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   // Bump this number if ever need to change the table columns later
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
-  // 3. Write our Queries (The easy way to read/write data)
+  // 3. Write Queries (to read/write data)
   Future<List<DailyRecord>> getAllRecords() => select(dailyRecords).get();
   Future<int> insertRecord(DailyRecordsCompanion entry) => into(dailyRecords).insert(entry);
   // Inside AppDatabase class
   Future<int> deleteAllRecords() => delete(dailyRecords).go();
   Future<int> deleteRecord(int id) => (delete(dailyRecords)..where((t) => t.id.equals(id))).go();
   Future<bool> updateRecord(DailyRecordsCompanion entry) => update(dailyRecords).replace(entry);
+  // ChatHistory methods
+  Future<List<ChatHistoryData>> getAllChatMessages() => select(chatHistory).get();
+  Future<int> insertChatMessage(ChatHistoryCompanion message) => into(chatHistory).insert(message);
+  Future<int> clearChatHistory() => delete(chatHistory).go();
 }
 
 // 4. Find a safe place on the phone to store the SQLite file
