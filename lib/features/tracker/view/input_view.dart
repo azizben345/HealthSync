@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import '../../avatar/controller/avatar_controller.dart';
+import '../../../data/services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../../../data/database/app_database.dart';
+import '../../../data/services/sync_service.dart';
 
 class InputView extends StatefulWidget {
   const InputView({super.key});
@@ -30,8 +34,56 @@ class _InputViewState extends State<InputView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("HealthSync Dashboard", style: TextStyle(fontWeight: FontWeight.bold)),
+        // title: const Text("HealthSync Dashboard", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Daily Check-in", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
+        // logout button
+        actions: [
+          // Cloud Backup (Firestore DB) Button
+          IconButton(
+            icon: const Icon(Icons.cloud_upload),
+            tooltip: "Backup to Cloud",
+            onPressed: () async {
+              try {
+                // Show a quick loading indicator
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Syncing to cloud...")),
+                );
+                
+                // Run the sync service
+                final db = context.read<AppDatabase>();
+                await SyncService(db).backupToCloud();
+                
+                // Success!
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Backup successful!"), backgroundColor: Colors.green),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Sync failed: $e"), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            style: IconButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 171, 23, 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            tooltip: "Logout",
+            onPressed: () async {
+              // calls the backend, and the StreamBuilder handles the UI switch
+              await AuthService().signOut();
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

@@ -45,14 +45,14 @@ class ChatController extends ChangeNotifier {
     )).toList();
 
     // --- START AI SESSION ---
-    // Note: Since this is an MVP, we are relying on the AI reading the 'contextString' 
-    // to remember who you are, rather than sending the entire chat history back to the cloud.
+    // currently just relying on the AI reading the 'contextString' 
+    // to remember who you are, rather than sending the entire chat history back to the cloud
     await dotenv.load(fileName: ".env");
     final apiKey = dotenv.env['GEMINI_API_KEY']!;
     await _aiService.startNewChatSession(contextString, apiKey);
 
     // --- D. GREETING FALLBACK ---
-    // If the database is completely empty (first time open), say hello!
+    // if the database is completely empty (first time open), say hello
     if (_messages.isEmpty) {
       final greetingText = "Hi there! I've reviewed your recent logs. How can I help you today?";
       
