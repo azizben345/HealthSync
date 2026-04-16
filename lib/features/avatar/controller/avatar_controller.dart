@@ -9,8 +9,8 @@ class AvatarController extends ChangeNotifier {
   final AppDatabase _db;
 
   // Internal State
-  String _avatarState = 'neutral'; // Default state
-  String _coachMessage = 'Ready to start your day?';
+  String _avatarState = 'neutral'; // default state
+  String _coachMessage = 'How was your day?'; // default response before daily sync
   bool _isLoading = false;
 
   // Public Getters (So the UI can read these but not change them directly)

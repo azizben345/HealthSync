@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:healthsync_demo_v01_00/features/history/controller/history_controller.dart';
 import '../../tracker/view/input_view.dart';
 import '../../history/view/history_view.dart';
+import '../../profile/view/profile_view.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -19,8 +20,9 @@ class _MainNavigationState extends State<MainNavigation> {
   // No functions are allowed in this list!
   final List<Widget> _screens = [
     const InputView(),     // left tab (Index 0)
-    const HistoryView(),   // middle tab (Index 1)
-    const ChatView(),      // right tab (Index 2)
+    const HistoryView(),   // mid left tab (Index 1)
+    const ChatView(),      // mid right tab (Index 2)
+    const ProfileView(),   // right tab (Index 3)
     // const Scaffold(        // right tab (Index 2) - placeholder view
     //   body: Center(
     //     child: Text("💬 AI Coach Chatbot\n(Coming Soon!)", textAlign: TextAlign.center),
@@ -68,6 +70,10 @@ class _MainNavigationState extends State<MainNavigation> {
             icon: Icon(Icons.chat_bubble_outline), 
             selectedIcon: Icon(Icons.chat_bubble), 
             label: 'Coach'
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline), 
+            label: 'Profile'
           ),
         ],
       ),

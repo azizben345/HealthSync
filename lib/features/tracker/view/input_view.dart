@@ -3,10 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import '../../avatar/controller/avatar_controller.dart';
 import '../../../data/services/auth_service.dart';
-import 'package:provider/provider.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/services/sync_service.dart';
-
+import '../../../data/services/health_service.dart';
 class InputView extends StatefulWidget {
   const InputView({super.key});
 
@@ -21,6 +20,7 @@ class _InputViewState extends State<InputView> {
   final TextEditingController _diaryController = TextEditingController();
   String _dietQuality = 'Normal'; 
   String _workoutType = 'Rest';
+  bool _isFetchingHealth = false;
 
   @override
   void dispose() {
@@ -45,16 +45,16 @@ class _InputViewState extends State<InputView> {
             tooltip: "Backup to Cloud",
             onPressed: () async {
               try {
-                // Show a quick loading indicator
+                // show loading indicator
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Syncing to cloud...")),
                 );
                 
-                // Run the sync service
+                // run the sync service
                 final db = context.read<AppDatabase>();
                 await SyncService(db).backupToCloud();
                 
-                // Success!
+                // success message
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Backup successful!"), backgroundColor: Colors.green),
@@ -143,14 +143,61 @@ class _InputViewState extends State<InputView> {
                     const Text("Daily Metrics", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const Divider(),
                     Text("Steps: ${_steps.toInt()}"),
-                    Slider(
-                      value: _steps,
-                      min: 0,
-                      max: 20000,
-                      divisions: 20,
-                      label: _steps.toInt().toString(),
-                      onChanged: (val) => setState(() => _steps = val),
+                    // // Step Input
+                    // Slider(
+                    //   value: _steps,
+                    //   min: 0,
+                    //   max: 20000,
+                    //   divisions: 20,
+                    //   label: _steps.toInt().toString(),
+                    //   onChanged: (val) => setState(() => _steps = val),
+                    // ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            initialValue: _steps.toString(),
+                            // decoration: const InputDecoration(labelText: 'Steps', border: OutlineInputBorder()),
+                            decoration: const InputDecoration(border: OutlineInputBorder()),
+                            keyboardType: TextInputType.number,
+                            onChanged: (val) => setState(() => _steps = double.tryParse(val) ?? 0),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        
+                        // The Auto-Fill Button
+                        SizedBox(
+                          height: 56, // Match the height of the TextField
+                          child: FilledButton.tonalIcon(
+                            icon: _isFetchingHealth 
+                                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                                : const Icon(Icons.auto_awesome),
+                            label: const Text("Auto-fill"),
+                            onPressed: _isFetchingHealth ? null : () async {
+                              setState(() => _isFetchingHealth = true);
+                              
+                              final steps = await HealthService().fetchTodaySteps();
+                              
+                              if (steps != null) {
+                                setState(() {
+                                  _steps = steps.toDouble();
+                                  // If you are using a TextEditingController instead of initialValue, 
+                                  // update it here! e.g., _stepsController.text = steps.toString();
+                                });
+                                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Steps synced from phone!"), backgroundColor: Colors.green));
+                              } else {
+                                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to get steps. Do you have Google Fit / Health Connect installed?"), backgroundColor: Colors.orange));
+                              }
+                              
+                              setState(() => _isFetchingHealth = false);
+                            },
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 12),
+                    // Sleep Input
                     Text("Sleep: ${_sleep.toStringAsFixed(1)} hours"),
                     Slider(
                       value: _sleep,

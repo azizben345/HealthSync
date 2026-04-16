@@ -47,6 +47,8 @@ class AppDatabase extends _$AppDatabase {
   Future<List<ChatHistoryData>> getAllChatMessages() => select(chatHistory).get();
   Future<int> insertChatMessage(ChatHistoryCompanion message) => into(chatHistory).insert(message);
   Future<int> clearChatHistory() => delete(chatHistory).go();
+  // clear all local daily records - used for Cloud Restore feature
+  Future<int> clearAllDailyRecords() => delete(dailyRecords).go();
 }
 
 // 4. Find a safe place on the phone to store the SQLite file
