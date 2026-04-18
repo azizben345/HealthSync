@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../controller/goal_provider.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/services/sync_service.dart';
 import '../../../data/services/auth_service.dart';
@@ -58,6 +59,45 @@ class _ProfileViewState extends State<ProfileView> {
           ),
           const SizedBox(height: 24),
 
+          const Text("Daily Targets", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(height: 8),
+          Consumer<GoalProvider>(
+            builder: (context, goalProvider, child) {
+              return Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.directions_walk, color: Colors.teal),
+                      title: const Text("Step Goal"),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text("${goalProvider.stepGoal} steps", style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const Icon(Icons.chevron_right, color: Colors.grey),
+                        ],
+                      ),
+                      onTap: () => _showEditStepGoalDialog(context, goalProvider),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.bedtime, color: Colors.indigo),
+                      title: const Text("Sleep Goal"),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text("${goalProvider.sleepGoal} hrs", style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const Icon(Icons.chevron_right, color: Colors.grey),
+                        ],
+                      ),
+                      onTap: () => _showEditSleepGoalDialog(context, goalProvider),
+                    ),
+                  ],
+                ),
+              );
+            }
+          ),
+          const SizedBox(height: 24),
+
           const Text("App Settings", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
           Card(
@@ -80,7 +120,7 @@ class _ProfileViewState extends State<ProfileView> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 24),
           
           const Text("Cloud Synchronization", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
@@ -177,4 +217,68 @@ class _ProfileViewState extends State<ProfileView> {
       ),
     );
   }
+
+  void _showEditStepGoalDialog(BuildContext context, GoalProvider provider) {
+    final TextEditingController ctrl = TextEditingController(text: provider.stepGoal.toString());
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Set Step Goal"),
+        content: TextField(
+          controller: ctrl,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(hintText: "e.g., 10000"),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          FilledButton(
+            onPressed: () {
+              final newGoal = int.tryParse(ctrl.text);
+              if (newGoal != null && newGoal > 0) {
+                provider.updateStepGoal(newGoal);
+              }
+              Navigator.pop(context);
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditSleepGoalDialog(BuildContext context, GoalProvider provider) {
+    double tempSleep = provider.sleepGoal;
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text("Set Sleep Goal"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("${tempSleep.toStringAsFixed(1)} hours", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Slider(
+                value: tempSleep,
+                min: 4,
+                max: 12,
+                divisions: 16,
+                onChanged: (val) => setState(() => tempSleep = val),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+            FilledButton(
+              onPressed: () {
+                provider.updateSleepGoal(tempSleep);
+                Navigator.pop(context);
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 }

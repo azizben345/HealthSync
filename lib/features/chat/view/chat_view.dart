@@ -47,7 +47,7 @@ class _ChatViewState extends State<ChatView> {
       appBar: AppBar(
         title: const Text('AI Health Coach'),
         centerTitle: true,
-        // NEW: Added the Clear History button back!
+        // Clear History button
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),
@@ -85,7 +85,7 @@ class _ChatViewState extends State<ChatView> {
 
   // --- UI Helpers ---
 
-  // Note: We pass BuildContext here so we can read the Theme!
+  // pass BuildContext - can read the Theme
   Widget _buildChatBubble(BuildContext context, String text, bool isUser) {
     final theme = Theme.of(context); // Grab the current theme (Light or Dark)
 
@@ -95,7 +95,7 @@ class _ChatViewState extends State<ChatView> {
         margin: const EdgeInsets.only(bottom: 12.0),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         decoration: BoxDecoration(
-          // THE MAGIC: Use 'primary' for user, 'surfaceContainerHighest' for AI
+          // use 'primary' for user, 'surfaceContainerHighest' for AI
           color: isUser ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),

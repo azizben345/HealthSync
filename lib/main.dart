@@ -11,6 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'features/auth/view/auth_view.dart';
 import 'features/home/view/main_navigation.dart';
+import 'features/profile/controller/goal_provider.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
 
@@ -29,11 +30,12 @@ Future<void> main() async {
 
   runApp(
     MultiProvider(
+      // controller-view link
       providers: [
+        Provider<AppDatabase>(create: (_) => database),
         ChangeNotifierProvider(
           create: (_) => AvatarController(aiService, database),
         ),
-        Provider<AppDatabase>(create: (_) => database),
         ChangeNotifierProvider(
           create: (context) =>
               HistoryController(context.read<AppDatabase>(), aiService),
@@ -44,6 +46,9 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => ThemeProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => GoalProvider()
         ),
       ],
       child: const HealthSyncApp(),

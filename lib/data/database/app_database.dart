@@ -36,6 +36,11 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 2;
 
+  // live stream that automatically updates the UI whenever the database changes
+  Stream<List<DailyRecord>> watchAllRecords() => (select(dailyRecords)
+        ..orderBy([(t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)]))
+      .watch();
+
   // 3. Write Queries (to read/write data)
   Future<List<DailyRecord>> getAllRecords() => select(dailyRecords).get();
   Future<int> insertRecord(DailyRecordsCompanion entry) => into(dailyRecords).insert(entry);

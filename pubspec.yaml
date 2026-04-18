@@ -53,6 +53,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -86,6 +87,15 @@ flutter:
 
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
+
+  # NEW: Put this at the very bottom of pubspec.yaml
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  # Optional: For Android 8.0+ adaptive icons (removes the ugly white circle background)
+  adaptive_icon_background: "#FFFFFF" # Or whatever your brand color is
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a

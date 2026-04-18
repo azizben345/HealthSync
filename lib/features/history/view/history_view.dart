@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:healthsync_demo_v01_00/data/database/app_database.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import '../controller/history_controller.dart';
+import '../../../data/database/app_database.dart';
 
 class HistoryView extends StatefulWidget {
   const HistoryView({super.key});
@@ -15,8 +16,7 @@ class HistoryView extends StatefulWidget {
 }
 
 class _HistoryViewState extends State<HistoryView> {
-  // default view of History tab
-  String _viewMode = 'map'; 
+  String _viewMode = 'chart'; // Let's default to the cool chart!
 
   Future<void> _showDatabasePath(BuildContext context) async {
     final dbFolder = await getApplicationDocumentsDirectory();
@@ -35,10 +35,12 @@ class _HistoryViewState extends State<HistoryView> {
   @override
   Widget build(BuildContext context) {
     final historyCtrl = context.watch<HistoryController>();
+    final db = context.read<AppDatabase>();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Health Logs"),
+        centerTitle: true,
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -56,7 +58,7 @@ class _HistoryViewState extends State<HistoryView> {
       ),
       body: Column(
         children: [
-          // Toggle Button
+          // 1. The Toggle Button
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: SegmentedButton<String>(
@@ -71,49 +73,106 @@ class _HistoryViewState extends State<HistoryView> {
             ),
           ),
           
-          // --- Display Area ---
+          // 2. The Live Display Area
           Expanded(
-            child: historyCtrl.records.isEmpty
-                ? const Center(child: Text("No records yet. Try injecting mock data!"))
-                : _viewMode == 'list' 
-                    ? _buildListView(historyCtrl) 
-                    : _buildChartView(historyCtrl),
+            child: StreamBuilder<List<DailyRecord>>(
+              stream: db.watchAllRecords(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                final records = snapshot.data ?? [];
+
+                if (records.isEmpty) {
+                  return const Center(child: Text("No records yet. Try injecting mock data!"));
+                }
+
+                // Pass the live records to whichever view is selected
+                return _viewMode == 'list' 
+                    ? _buildListView(records, historyCtrl) 
+                    : _buildChartView(records);
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  // List Logic
-  Widget _buildListView(HistoryController historyCtrl) {
+  // --- SLEEK LIST VIEW ---
+  Widget _buildListView(List<DailyRecord> records, HistoryController historyCtrl) {
     return ListView.builder(
-      itemCount: historyCtrl.records.length,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      itemCount: records.length,
       itemBuilder: (context, index) {
-        final record = historyCtrl.records[index];
-        final dateStr = "${record.date.day}/${record.date.month}";
+        final record = records[index];
+        final dateString = DateFormat.yMMMd().format(record.date);
 
         return Dismissible(
           key: Key(record.id.toString()),
-          background: Container(color: Colors.red),
+          background: Container(
+            color: Colors.red,
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            child: const Icon(Icons.delete, color: Colors.white),
+          ),
+          direction: DismissDirection.endToStart,
           onDismissed: (direction) => historyCtrl.deleteSingleRecord(record.id),
           child: Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: _getColorForState(record.avatarState),
-                child: Icon(_getIconForState(record.avatarState), color: Colors.white),
+            margin: const EdgeInsets.only(bottom: 16.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Row: Date & Badges
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(dateString, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.teal)),
+                      Row(
+                        children: [
+                          // Retry AI Button (If it failed)
+                          if (record.avatarState == 'pending') 
+                            historyCtrl.isRetrying(record.id)
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                                : IconButton(
+                                    icon: const Icon(Icons.refresh, color: Colors.blue, size: 20),
+                                    onPressed: () => historyCtrl.retryPendingAI(record),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                          const SizedBox(width: 8),
+                          // Workout Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              record.workoutType ?? "Rest",
+                              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  
+                  // Metrics Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildMetric(Icons.directions_walk, "${record.steps}", "Steps"),
+                      _buildMetric(Icons.bedtime, "${record.sleepHours}h", "Sleep"),
+                      _buildMetric(Icons.restaurant, record.dietQuality ?? "-", "Diet"),
+                    ],
+                  ),
+                ],
               ),
-              title: Text(dateStr, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text("Steps: ${record.steps} | Sleep: ${record.sleepHours}h\nWorkout: ${record.workoutType} | Diet: ${record.dietQuality}"),
-              isThreeLine: true,
-              trailing: record.avatarState == 'pending' 
-                  ? (historyCtrl.isRetrying(record.id)
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                      : IconButton(
-                          icon: const Icon(Icons.refresh, color: Colors.blue),
-                          onPressed: () => historyCtrl.retryPendingAI(record),
-                        ))
-                  : null,
             ),
           ),
         );
@@ -121,17 +180,21 @@ class _HistoryViewState extends State<HistoryView> {
     );
   }
 
-  // Bar Chart
-  // --- DASHBOARD VIEW (Google Fit Style) ---
-  Widget _buildChartView(HistoryController historyCtrl) {
-    // Grab up to 7 days of data, chronologically (oldest to newest)
-    final recentRecords = historyCtrl.records.take(7).toList().reversed.toList();
+  Widget _buildMetric(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.grey, size: 20),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+      ],
+    );
+  }
 
-    if (recentRecords.isEmpty) {
-      return const Center(child: Text("No data to display."));
-    }
-
-    // The last item in the list is the most recent day ("Today")
+  // --- ANALYTICS CHART VIEW ---
+  Widget _buildChartView(List<DailyRecord> records) {
+    // Because the StreamBuilder orders by newest first, we take the top 7 and reverse them for chronological charting
+    final recentRecords = records.take(7).toList().reversed.toList();
     final todayRecord = recentRecords.last;
 
     return ListView(
@@ -141,7 +204,7 @@ class _HistoryViewState extends State<HistoryView> {
           title: "Steps",
           valueText: todayRecord.steps.toString(),
           unitText: "Today",
-          barColor: Colors.blueAccent,
+          barColor: Colors.teal, // Updated to match your theme!
           records: recentRecords,
           valueMapper: (record) => record.steps.toDouble(),
         ),
@@ -150,7 +213,7 @@ class _HistoryViewState extends State<HistoryView> {
           title: "Sleep",
           valueText: todayRecord.sleepHours.toStringAsFixed(1),
           unitText: "Hours Today",
-          barColor: Colors.deepPurpleAccent,
+          barColor: Colors.indigoAccent,
           records: recentRecords,
           valueMapper: (record) => record.sleepHours,
         ),
@@ -158,7 +221,6 @@ class _HistoryViewState extends State<HistoryView> {
     );
   }
 
-  // --- THE REUSABLE GOOGLE FIT CARD ENGINE ---
   Widget _buildMetricCard({
     required String title,
     required String valueText,
@@ -167,12 +229,11 @@ class _HistoryViewState extends State<HistoryView> {
     required List<DailyRecord> records,
     required double Function(DailyRecord) valueMapper,
   }) {
-    // 1. Calculate the maximum Y value so the bars don't break the top of the chart
     double maxY = 0;
     for (var r in records) {
       if (valueMapper(r) > maxY) maxY = valueMapper(r);
     }
-    if (maxY == 0) maxY = 10; // Fallback to prevent divide-by-zero
+    if (maxY == 0) maxY = 10; 
 
     return Card(
       elevation: 2,
@@ -182,45 +243,35 @@ class _HistoryViewState extends State<HistoryView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title Section
             Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const Text("Last 7 days", style: TextStyle(color: Colors.grey, fontSize: 12)),
             const SizedBox(height: 16),
-            
-            // The Split View: Value on Left, Chart on Right
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // LEFT SIDE: Big Number
                 Expanded(
                   flex: 1,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        valueText, 
-                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: barColor)
-                      ),
+                      Text(valueText, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: barColor)),
                       Text(unitText, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                     ],
                   ),
                 ),
-                
-                // RIGHT SIDE: The Minimalist Chart
                 Expanded(
                   flex: 2,
                   child: SizedBox(
-                    height: 70, // Keep the chart short and glanceable!
+                    height: 70, 
                     child: BarChart(
                       BarChartData(
-                        maxY: maxY * 1.2, // Give the highest bar a little breathing room
-                        gridData: const FlGridData(show: false), // Hide background lines
-                        borderData: FlBorderData(show: false), // Hide borders
+                        maxY: maxY * 1.2, 
+                        gridData: const FlGridData(show: false), 
+                        borderData: FlBorderData(show: false), 
                         titlesData: FlTitlesData(
                           leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                           rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                           topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          // Only show the bottom X-Axis letters
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
@@ -240,7 +291,6 @@ class _HistoryViewState extends State<HistoryView> {
                             ),
                           ),
                         ),
-                        // Draw the actual bars
                         barGroups: records.asMap().entries.map((entry) {
                           return BarChartGroupData(
                             x: entry.key,
@@ -248,7 +298,7 @@ class _HistoryViewState extends State<HistoryView> {
                               BarChartRodData(
                                 toY: valueMapper(entry.value),
                                 color: barColor,
-                                width: 10, // Slim, sleek bars
+                                width: 10, 
                                 borderRadius: BorderRadius.circular(2),
                               )
                             ],
@@ -266,7 +316,6 @@ class _HistoryViewState extends State<HistoryView> {
     );
   }
 
-  // Helper to convert DateTime.weekday (1-7) into a single letter
   String _getWeekdayLetter(int weekday) {
     switch (weekday) {
       case 1: return 'M';
@@ -277,28 +326,6 @@ class _HistoryViewState extends State<HistoryView> {
       case 6: return 'S';
       case 7: return 'S';
       default: return '';
-    }
-  }
-
-  Color _getColorForState(String state) {
-    switch (state.toLowerCase()) {
-      case 'happy': return Colors.green;
-      case 'proud': return Colors.purple;
-      case 'tired': return Colors.orange;
-      case 'gloomy': return Colors.blueGrey;
-      case 'pending': return Colors.grey;
-      default: return Colors.grey;
-    }
-  }
-
-  IconData _getIconForState(String state) {
-    switch (state.toLowerCase()) {
-      case 'happy': return Icons.sentiment_very_satisfied;
-      case 'proud': return Icons.star;
-      case 'tired': return Icons.bedtime;
-      case 'gloomy': return Icons.sentiment_dissatisfied;
-      case 'pending': return Icons.hourglass_empty;
-      default: return Icons.person;
     }
   }
 }
