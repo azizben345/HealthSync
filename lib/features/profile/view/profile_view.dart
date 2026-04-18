@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/services/sync_service.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../theme/theme_provider.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -56,14 +57,39 @@ class _ProfileViewState extends State<ProfileView> {
             ),
           ),
           const SizedBox(height: 24),
+
+          const Text("App Settings", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(height: 8),
+          Card(
+            child: Column(
+              children: [
+                // dark mode toggler
+                Consumer<ThemeProvider>(
+                  builder: (context, themeProvider, child) {
+                    return SwitchListTile(
+                      title: const Text("Dark Mode"),
+                      secondary: Icon(themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode, color: Colors.teal),
+                      value: themeProvider.isDarkMode,
+                      onChanged: (value) {
+                        themeProvider.toggleTheme(value);
+                      },
+                    );
+                  }
+                ),
+                // const Divider(height: 1),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           
           const Text("Cloud Synchronization", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
           
-          // Sync Controls
+          // Sync Controls Card
           Card(
             child: Column(
               children: [
+
                 ListTile(
                   leading: const Icon(Icons.cloud_upload, color: Colors.blue),
                   title: const Text("Backup to Cloud"),
@@ -72,13 +98,14 @@ class _ProfileViewState extends State<ProfileView> {
                   onTap: _isSyncing ? null : _handleBackup,
                 ),
                 const Divider(height: 1),
+
                 ListTile(
                   leading: const Icon(Icons.cloud_download, color: Colors.green),
                   title: const Text("Restore from Cloud"),
                   subtitle: const Text("Overwrite local data with cloud backup"),
                   trailing: _isSyncing ? const CircularProgressIndicator() : const Icon(Icons.chevron_right),
                   onTap: _isSyncing ? null : () {
-                    // Always confirm before overwriting local data!
+                    // Always confirm before overwriting local data
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -98,6 +125,7 @@ class _ProfileViewState extends State<ProfileView> {
                     );
                   },
                 ),
+
               ],
             ),
           ),

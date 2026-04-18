@@ -12,6 +12,7 @@ import 'firebase_options.dart';
 import 'features/auth/view/auth_view.dart';
 import 'features/home/view/main_navigation.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,9 @@ Future<void> main() async {
           create: (context) =>
               ChatController(aiService, context.read<AppDatabase>()),
         ),
+        ChangeNotifierProvider(
+          create: (_) => ThemeProvider(),
+        ),
       ],
       child: const HealthSyncApp(),
     ),
@@ -52,6 +56,9 @@ class HealthSyncApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final themeProvider = context.watch<ThemeProvider>();
+
     return MaterialApp(
       title: 'HealthSync',
 
@@ -59,7 +66,8 @@ class HealthSyncApp extends StatelessWidget {
       // theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      // themeMode: ThemeMode.system,
+      themeMode: themeProvider.themeMode,
 
       // Gatekeeper StreamBuilder
       home: StreamBuilder<User?>(
@@ -72,9 +80,19 @@ class HealthSyncApp extends StatelessWidget {
             );
           }
 
-          // If a user is found, show the main app!
+          // If a user is found, show the main app
           if (snapshot.hasData) {
             return const MainNavigation();
+          }
+
+          // If we already know who the user is, don't destroy the navigation bar!
+          if (snapshot.hasData) {
+            return const MainNavigation(); // (Make sure this has the 'const' keyword if possible)
+          }
+
+          // Only show the loading screen if we genuinely have no data yet
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
           }
 
           // Otherwise, force them to login/register
