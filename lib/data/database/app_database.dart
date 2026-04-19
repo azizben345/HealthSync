@@ -15,6 +15,7 @@ class DailyRecords extends Table {
   RealColumn get sleepHours => real()();
   TextColumn get diaryNote => text()();
   TextColumn get avatarState => text()();
+  TextColumn get coachMessage => text().nullable()();
   TextColumn get dietQuality => text().withDefault(const Constant('Normal'))();
   TextColumn get workoutType => text().withDefault(const Constant('Rest'))();
 }
@@ -54,6 +55,74 @@ class AppDatabase extends _$AppDatabase {
   Future<int> clearChatHistory() => delete(chatHistory).go();
   // clear all local daily records - used for Cloud Restore feature
   Future<int> clearAllDailyRecords() => delete(dailyRecords).go();
+
+  // For Calendar Function: Time-Traveling Upsert Function
+  Future<void> saveOrUpdateDailyLog({
+    required DateTime date,
+    required int steps,
+    required double sleep,
+    required String diet,
+    required String workout,
+    required String diary,
+    required String avatarState,
+    String? coachMessage,
+  }) async {
+    // 1. Normalize the time! 
+    // This strips away the hours/minutes so we only look at the exact calendar day.
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1, milliseconds: -1));
+
+    // 2. Ask SQLite: "Do we already have a record for this calendar day?"
+    final existingRecord = await (select(dailyRecords)
+          ..where((t) => t.date.isBetweenValues(startOfDay, endOfDay)))
+        .getSingleOrNull();
+
+    if (existingRecord != null) {
+      // 3. UPSERT MATCH: if record exists, update it
+      await update(dailyRecords).replace(
+        existingRecord.copyWith(
+          steps: steps,
+          sleepHours: sleep,
+          dietQuality: diet,
+          workoutType: workout,
+          diaryNote: diary,
+          avatarState: avatarState,
+          coachMessage: Value(coachMessage),
+        ),
+      );
+    } else {
+      // 4. UPSERT MATCH: if no record exists, insert a brand new one
+      await into(dailyRecords).insert(
+        DailyRecordsCompanion.insert(
+          date: Value(startOfDay),       // ADDED Value()
+          steps: steps,                  // Left as raw int
+          sleepHours: sleep,             // Left as raw double
+          dietQuality: Value(diet),      // ADDED Value()
+          workoutType: Value(workout),   // ADDED Value()
+          diaryNote: diary,              // REMOVED Value()
+          avatarState: avatarState,      // Left as raw String
+          coachMessage: Value(coachMessage),
+        ),
+      );
+    }
+  }
+
+  // function to fetch a single day's record to populate the UI
+  Future<DailyRecord?> getRecordByDate(DateTime date) async {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1, milliseconds: -1));
+
+    return await (select(dailyRecords)
+          ..where((t) => t.date.isBetweenValues(startOfDay, endOfDay)))
+        .getSingleOrNull();
+  }
+
+  // get list of all dates that has logged data
+  Future<List<DateTime>> getAllLoggedDates() async {
+    final records = await select(dailyRecords).get();
+    return records.map((r) => r.date).toList();
+  }
+
 }
 
 // 4. Find a safe place on the phone to store the SQLite file

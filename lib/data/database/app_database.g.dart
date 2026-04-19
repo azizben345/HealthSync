@@ -74,6 +74,17 @@ class $DailyRecordsTable extends DailyRecords
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _coachMessageMeta = const VerificationMeta(
+    'coachMessage',
+  );
+  @override
+  late final GeneratedColumn<String> coachMessage = GeneratedColumn<String>(
+    'coach_message',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _dietQualityMeta = const VerificationMeta(
     'dietQuality',
   );
@@ -106,6 +117,7 @@ class $DailyRecordsTable extends DailyRecords
     sleepHours,
     diaryNote,
     avatarState,
+    coachMessage,
     dietQuality,
     workoutType,
   ];
@@ -165,6 +177,15 @@ class $DailyRecordsTable extends DailyRecords
     } else if (isInserting) {
       context.missing(_avatarStateMeta);
     }
+    if (data.containsKey('coach_message')) {
+      context.handle(
+        _coachMessageMeta,
+        coachMessage.isAcceptableOrUnknown(
+          data['coach_message']!,
+          _coachMessageMeta,
+        ),
+      );
+    }
     if (data.containsKey('diet_quality')) {
       context.handle(
         _dietQualityMeta,
@@ -216,6 +237,10 @@ class $DailyRecordsTable extends DailyRecords
         DriftSqlType.string,
         data['${effectivePrefix}avatar_state'],
       )!,
+      coachMessage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}coach_message'],
+      ),
       dietQuality: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}diet_quality'],
@@ -240,6 +265,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
   final double sleepHours;
   final String diaryNote;
   final String avatarState;
+  final String? coachMessage;
   final String dietQuality;
   final String workoutType;
   const DailyRecord({
@@ -249,6 +275,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     required this.sleepHours,
     required this.diaryNote,
     required this.avatarState,
+    this.coachMessage,
     required this.dietQuality,
     required this.workoutType,
   });
@@ -261,6 +288,9 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     map['sleep_hours'] = Variable<double>(sleepHours);
     map['diary_note'] = Variable<String>(diaryNote);
     map['avatar_state'] = Variable<String>(avatarState);
+    if (!nullToAbsent || coachMessage != null) {
+      map['coach_message'] = Variable<String>(coachMessage);
+    }
     map['diet_quality'] = Variable<String>(dietQuality);
     map['workout_type'] = Variable<String>(workoutType);
     return map;
@@ -274,6 +304,9 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
       sleepHours: Value(sleepHours),
       diaryNote: Value(diaryNote),
       avatarState: Value(avatarState),
+      coachMessage: coachMessage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coachMessage),
       dietQuality: Value(dietQuality),
       workoutType: Value(workoutType),
     );
@@ -291,6 +324,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
       sleepHours: serializer.fromJson<double>(json['sleepHours']),
       diaryNote: serializer.fromJson<String>(json['diaryNote']),
       avatarState: serializer.fromJson<String>(json['avatarState']),
+      coachMessage: serializer.fromJson<String?>(json['coachMessage']),
       dietQuality: serializer.fromJson<String>(json['dietQuality']),
       workoutType: serializer.fromJson<String>(json['workoutType']),
     );
@@ -305,6 +339,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
       'sleepHours': serializer.toJson<double>(sleepHours),
       'diaryNote': serializer.toJson<String>(diaryNote),
       'avatarState': serializer.toJson<String>(avatarState),
+      'coachMessage': serializer.toJson<String?>(coachMessage),
       'dietQuality': serializer.toJson<String>(dietQuality),
       'workoutType': serializer.toJson<String>(workoutType),
     };
@@ -317,6 +352,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     double? sleepHours,
     String? diaryNote,
     String? avatarState,
+    Value<String?> coachMessage = const Value.absent(),
     String? dietQuality,
     String? workoutType,
   }) => DailyRecord(
@@ -326,6 +362,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     sleepHours: sleepHours ?? this.sleepHours,
     diaryNote: diaryNote ?? this.diaryNote,
     avatarState: avatarState ?? this.avatarState,
+    coachMessage: coachMessage.present ? coachMessage.value : this.coachMessage,
     dietQuality: dietQuality ?? this.dietQuality,
     workoutType: workoutType ?? this.workoutType,
   );
@@ -341,6 +378,9 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
       avatarState: data.avatarState.present
           ? data.avatarState.value
           : this.avatarState,
+      coachMessage: data.coachMessage.present
+          ? data.coachMessage.value
+          : this.coachMessage,
       dietQuality: data.dietQuality.present
           ? data.dietQuality.value
           : this.dietQuality,
@@ -359,6 +399,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
           ..write('sleepHours: $sleepHours, ')
           ..write('diaryNote: $diaryNote, ')
           ..write('avatarState: $avatarState, ')
+          ..write('coachMessage: $coachMessage, ')
           ..write('dietQuality: $dietQuality, ')
           ..write('workoutType: $workoutType')
           ..write(')'))
@@ -373,6 +414,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     sleepHours,
     diaryNote,
     avatarState,
+    coachMessage,
     dietQuality,
     workoutType,
   );
@@ -386,6 +428,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
           other.sleepHours == this.sleepHours &&
           other.diaryNote == this.diaryNote &&
           other.avatarState == this.avatarState &&
+          other.coachMessage == this.coachMessage &&
           other.dietQuality == this.dietQuality &&
           other.workoutType == this.workoutType);
 }
@@ -397,6 +440,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
   final Value<double> sleepHours;
   final Value<String> diaryNote;
   final Value<String> avatarState;
+  final Value<String?> coachMessage;
   final Value<String> dietQuality;
   final Value<String> workoutType;
   const DailyRecordsCompanion({
@@ -406,6 +450,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     this.sleepHours = const Value.absent(),
     this.diaryNote = const Value.absent(),
     this.avatarState = const Value.absent(),
+    this.coachMessage = const Value.absent(),
     this.dietQuality = const Value.absent(),
     this.workoutType = const Value.absent(),
   });
@@ -416,6 +461,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     required double sleepHours,
     required String diaryNote,
     required String avatarState,
+    this.coachMessage = const Value.absent(),
     this.dietQuality = const Value.absent(),
     this.workoutType = const Value.absent(),
   }) : steps = Value(steps),
@@ -429,6 +475,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     Expression<double>? sleepHours,
     Expression<String>? diaryNote,
     Expression<String>? avatarState,
+    Expression<String>? coachMessage,
     Expression<String>? dietQuality,
     Expression<String>? workoutType,
   }) {
@@ -439,6 +486,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
       if (sleepHours != null) 'sleep_hours': sleepHours,
       if (diaryNote != null) 'diary_note': diaryNote,
       if (avatarState != null) 'avatar_state': avatarState,
+      if (coachMessage != null) 'coach_message': coachMessage,
       if (dietQuality != null) 'diet_quality': dietQuality,
       if (workoutType != null) 'workout_type': workoutType,
     });
@@ -451,6 +499,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     Value<double>? sleepHours,
     Value<String>? diaryNote,
     Value<String>? avatarState,
+    Value<String?>? coachMessage,
     Value<String>? dietQuality,
     Value<String>? workoutType,
   }) {
@@ -461,6 +510,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
       sleepHours: sleepHours ?? this.sleepHours,
       diaryNote: diaryNote ?? this.diaryNote,
       avatarState: avatarState ?? this.avatarState,
+      coachMessage: coachMessage ?? this.coachMessage,
       dietQuality: dietQuality ?? this.dietQuality,
       workoutType: workoutType ?? this.workoutType,
     );
@@ -487,6 +537,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     if (avatarState.present) {
       map['avatar_state'] = Variable<String>(avatarState.value);
     }
+    if (coachMessage.present) {
+      map['coach_message'] = Variable<String>(coachMessage.value);
+    }
     if (dietQuality.present) {
       map['diet_quality'] = Variable<String>(dietQuality.value);
     }
@@ -505,6 +558,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
           ..write('sleepHours: $sleepHours, ')
           ..write('diaryNote: $diaryNote, ')
           ..write('avatarState: $avatarState, ')
+          ..write('coachMessage: $coachMessage, ')
           ..write('dietQuality: $dietQuality, ')
           ..write('workoutType: $workoutType')
           ..write(')'))
@@ -839,6 +893,7 @@ typedef $$DailyRecordsTableCreateCompanionBuilder =
       required double sleepHours,
       required String diaryNote,
       required String avatarState,
+      Value<String?> coachMessage,
       Value<String> dietQuality,
       Value<String> workoutType,
     });
@@ -850,6 +905,7 @@ typedef $$DailyRecordsTableUpdateCompanionBuilder =
       Value<double> sleepHours,
       Value<String> diaryNote,
       Value<String> avatarState,
+      Value<String?> coachMessage,
       Value<String> dietQuality,
       Value<String> workoutType,
     });
@@ -890,6 +946,11 @@ class $$DailyRecordsTableFilterComposer
 
   ColumnFilters<String> get avatarState => $composableBuilder(
     column: $table.avatarState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get coachMessage => $composableBuilder(
+    column: $table.coachMessage,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -943,6 +1004,11 @@ class $$DailyRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get coachMessage => $composableBuilder(
+    column: $table.coachMessage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get dietQuality => $composableBuilder(
     column: $table.dietQuality,
     builder: (column) => ColumnOrderings(column),
@@ -982,6 +1048,11 @@ class $$DailyRecordsTableAnnotationComposer
 
   GeneratedColumn<String> get avatarState => $composableBuilder(
     column: $table.avatarState,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get coachMessage => $composableBuilder(
+    column: $table.coachMessage,
     builder: (column) => column,
   );
 
@@ -1033,6 +1104,7 @@ class $$DailyRecordsTableTableManager
                 Value<double> sleepHours = const Value.absent(),
                 Value<String> diaryNote = const Value.absent(),
                 Value<String> avatarState = const Value.absent(),
+                Value<String?> coachMessage = const Value.absent(),
                 Value<String> dietQuality = const Value.absent(),
                 Value<String> workoutType = const Value.absent(),
               }) => DailyRecordsCompanion(
@@ -1042,6 +1114,7 @@ class $$DailyRecordsTableTableManager
                 sleepHours: sleepHours,
                 diaryNote: diaryNote,
                 avatarState: avatarState,
+                coachMessage: coachMessage,
                 dietQuality: dietQuality,
                 workoutType: workoutType,
               ),
@@ -1053,6 +1126,7 @@ class $$DailyRecordsTableTableManager
                 required double sleepHours,
                 required String diaryNote,
                 required String avatarState,
+                Value<String?> coachMessage = const Value.absent(),
                 Value<String> dietQuality = const Value.absent(),
                 Value<String> workoutType = const Value.absent(),
               }) => DailyRecordsCompanion.insert(
@@ -1062,6 +1136,7 @@ class $$DailyRecordsTableTableManager
                 sleepHours: sleepHours,
                 diaryNote: diaryNote,
                 avatarState: avatarState,
+                coachMessage: coachMessage,
                 dietQuality: dietQuality,
                 workoutType: workoutType,
               ),

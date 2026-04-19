@@ -76,7 +76,8 @@ class HistoryController extends ChangeNotifier {
         record.sleepHours, 
         record.diaryNote,
         record.dietQuality,
-        record.workoutType
+        record.workoutType,
+        record.date
       );
       
       final newState = result['state'] ?? 'neutral';

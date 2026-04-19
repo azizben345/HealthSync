@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart' as drift;
+// import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import '../../../data/services/ai_service.dart';
 import '../../../data/database/app_database.dart';
@@ -27,14 +27,15 @@ class AvatarController extends ChangeNotifier {
     required String diary,
     required String diet,     
     required String workout,
+    required DateTime? date,
   }) async {
     _isLoading = true;
     notifyListeners();
 
     try {
       // 1. call Gemini service and send data via arguments
-      final result = await _aiService.getAvatarResponse(steps, sleep, diary, diet, workout);
-      
+      final result = await _aiService.getAvatarResponse(steps, sleep, diary, diet, workout, date);
+
       _avatarState = result['state'] ?? 'neutral';
       _coachMessage = result['message'] ?? 'Keep going!';
 
@@ -46,20 +47,35 @@ class AvatarController extends ChangeNotifier {
       
     } finally {
       // 3. SAVE DATA
-      await _db.insertRecord(
-        DailyRecordsCompanion.insert(
-          steps: steps,
-          sleepHours: sleep,
-          diaryNote: diary,
-          avatarState: _avatarState, // 'happy', 'tired', or 'pending'
-          dietQuality: drift.Value(diet),       
-          workoutType: drift.Value(workout),
-        ),
+      // await _db.insertRecord(
+      //   DailyRecordsCompanion.insert(
+      //     steps: steps,
+      //     sleepHours: sleep,
+      //     diaryNote: diary,
+      //     avatarState: _avatarState, // 'happy', 'tired', or 'pending'
+      //     dietQuality: drift.Value(diet),       
+      //     workoutType: drift.Value(workout),
+      //   ),
+      // );
+      await _db.saveOrUpdateDailyLog(
+        date: date ?? DateTime.now(),
+        steps: steps,
+        sleep: sleep,
+        diet: diet,
+        workout: workout,
+        diary: diary,
+        avatarState: _avatarState,
       );
 
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> setHistoricalState(String state, String message) async {
+    _avatarState = state;
+    _coachMessage = message;
+    notifyListeners();
   }
 
   // // to generate mock data (can link to button)

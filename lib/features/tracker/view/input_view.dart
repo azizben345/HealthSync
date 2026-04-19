@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:healthsync_demo_v01_00/data/database/app_database.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import '../../avatar/controller/avatar_controller.dart';
@@ -6,6 +7,8 @@ import '../../avatar/controller/avatar_controller.dart';
 // import '../../../data/database/app_database.dart';
 // import '../../../data/services/sync_service.dart';
 import '../../../data/services/health_service.dart';
+import 'package:table_calendar/table_calendar.dart';
+
 class InputView extends StatefulWidget {
   const InputView({super.key});
 
@@ -21,6 +24,63 @@ class _InputViewState extends State<InputView> {
   String _dietQuality = 'Normal'; 
   String _workoutType = 'Rest';
   bool _isFetchingHealth = false;
+
+  // keep track of which day users are logging for (defaults to today)
+  DateTime _selectedDate = DateTime.now();
+  // flag to track either updating existing data or creating new data
+  bool _hasExistingData = false;
+  // set of dates to tell the calendar where to draw dots - indicated logged dates
+  Set<DateTime> _loggedDates = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // NEW: Check if there's already data for "Today" when the screen first loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDataForSelectedDate();
+      _refreshCalendarDots();
+    });
+  }
+
+  // NEW: The function that pulls the database record and changes the UI sliders
+  Future<void> _loadDataForSelectedDate() async {
+    final db = context.read<AppDatabase>();
+    final record = await db.getRecordByDate(_selectedDate);
+
+    setState(() {
+      if (record != null) {
+        // MATCH FOUND: Auto-fill the form with their past data!
+        _hasExistingData = true;
+        _steps = record.steps.toDouble();
+        _sleep = record.sleepHours;
+        _dietQuality = record.dietQuality ?? 'Normal';
+        _workoutType = record.workoutType ?? 'Rest';
+        _diaryController.text = record.diaryNote ?? '';
+        context.read<AvatarController>().setHistoricalState(
+          record.avatarState, 
+          record.coachMessage ?? "I still haven't respond to this date's logs",
+        );
+      } else {
+        // NO MATCH: Reset the form to default blank states
+        _hasExistingData = false;
+        _steps = 5000;
+        _sleep = 7.0;
+        _dietQuality = 'Normal';
+        _workoutType = 'Rest';
+        _diaryController.text = '';
+      }
+    });
+  }
+
+  // fetch list of dates from database
+  Future<void> _refreshCalendarDots() async {
+    final db = context.read<AppDatabase>();
+    final dates = await db.getAllLoggedDates();
+    setState(() {
+      // Normalize them so they match the calendar perfectly
+      _loggedDates = dates.map((d) => DateTime(d.year, d.month, d.day)).toSet();
+    });
+  }
 
   @override
   void dispose() {
@@ -46,8 +106,48 @@ class _InputViewState extends State<InputView> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Good Morning,", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey)),
+                    // Text("Good Morning,", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey)),
                     Text("Ready to sync?", style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Text("Good Morning,", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey)),
+                            // NEW: A clickable button that shows the selected date
+                            TextButton.icon(
+                              onPressed: _pickDate,
+                              icon: const Icon(Icons.calendar_month, color: Colors.teal),
+                              label: Text(
+                                // If it's today, say "Today". Otherwise, show the date.
+                                _selectedDate.day == DateTime.now().day && _selectedDate.month == DateTime.now().month 
+                                    ? "Logging for Today" 
+                                    : "Logging for ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.teal),
+                              ),
+                              style: TextButton.styleFrom(padding: EdgeInsets.zero, alignment: Alignment.centerLeft),
+                            ),
+                            // Visual Cue
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _hasExistingData ? Colors.orange.shade100 : Colors.teal.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                _hasExistingData ? "✎ Editing Existing Log" : "✨ Creating New Log",
+                                style: TextStyle(
+                                  fontSize: 12, 
+                                  fontWeight: FontWeight.bold,
+                                  color: _hasExistingData ? Colors.orange.shade900 : Colors.teal.shade900,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ],
@@ -246,9 +346,13 @@ class _InputViewState extends State<InputView> {
                             diary: _diaryController.text,
                             diet: _dietQuality,
                             workout: _workoutType,
+                            date: _selectedDate,
                           );
                         },
-                        child: const Text("Save Daily Log", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          _hasExistingData ? "Update Daily Log" : "Save Daily Log", 
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                        ),
                       ),
                     )
                   ],
@@ -262,4 +366,65 @@ class _InputViewState extends State<InputView> {
       ),
     );
   }
+
+  // Calendar Popup Function
+  void _pickDate() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder( // StatefulBuilder allows the calendar to update inside the modal
+          builder: (context, setModalState) {
+            return Container(
+              height: 450,
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(4)),
+                  ),
+                  const SizedBox(height: 16),
+                  TableCalendar(
+                    firstDay: DateTime.now().subtract(const Duration(days: 365)),
+                    lastDay: DateTime.now(),
+                    focusedDay: _selectedDate,
+                    currentDay: _selectedDate, // Highlights the currently selected day
+                    calendarFormat: CalendarFormat.month,
+                    availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+                    
+                    // THIS IS THE MAGIC: It checks if the day is in our database list
+                    eventLoader: (day) {
+                      final normalizedDay = DateTime(day.year, day.month, day.day);
+                      return _loggedDates.contains(normalizedDay) ? ['Logged'] : [];
+                    },
+                    
+                    // Styling to make it match your theme
+                    calendarStyle: CalendarStyle(
+                      markerDecoration: const BoxDecoration(color: Colors.teal, shape: BoxShape.circle),
+                      todayDecoration: BoxDecoration(color: Colors.teal.withOpacity(0.3), shape: BoxShape.circle),
+                      selectedDecoration: const BoxDecoration(color: Colors.teal, shape: BoxShape.circle),
+                    ),
+                    headerStyle: const HeaderStyle(titleCentered: true),
+                    
+                    onDaySelected: (selectedDay, focusedDay) async {
+                      Navigator.pop(context); // Close the modal
+                      setState(() {
+                        _selectedDate = selectedDay;
+                      });
+                      await _loadDataForSelectedDate(); // Auto-fill the form!
+                    },
+                  ),
+                ],
+              ),
+            );
+          }
+        );
+      },
+    );
+  }
+
 }

@@ -16,7 +16,8 @@ class AIService {
     double sleep, 
     String diary, 
     String diet, 
-    String workout
+    String workout,
+    DateTime? date
   ) async {
     final prompt = """
       You are an AI character engine. 
