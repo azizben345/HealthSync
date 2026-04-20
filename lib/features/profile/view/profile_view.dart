@@ -6,6 +6,7 @@ import '../../../data/database/app_database.dart';
 import '../../../data/services/sync_service.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../theme/theme_provider.dart';
+import 'goal_settings_view.dart' show GoalSettingsView;
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -67,30 +68,41 @@ class _ProfileViewState extends State<ProfileView> {
                 child: Column(
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.directions_walk, color: Colors.teal),
-                      title: const Text("Step Goal"),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text("${goalProvider.stepGoal} steps", style: const TextStyle(fontWeight: FontWeight.bold)),
-                          const Icon(Icons.chevron_right, color: Colors.grey),
-                        ],
-                      ),
-                      onTap: () => _showEditStepGoalDialog(context, goalProvider),
+                      leading: const Icon(Icons.flag),
+                      title: const Text("Goal Settings"),
+                      trailing: _isSyncing ? const CircularProgressIndicator() : const Icon(Icons.chevron_right),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => GoalSettingsView()),
+                        );
+                      },
                     ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.bedtime, color: Colors.indigo),
-                      title: const Text("Sleep Goal"),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text("${goalProvider.sleepGoal} hrs", style: const TextStyle(fontWeight: FontWeight.bold)),
-                          const Icon(Icons.chevron_right, color: Colors.grey),
-                        ],
-                      ),
-                      onTap: () => _showEditSleepGoalDialog(context, goalProvider),
-                    ),
+                    // ListTile(
+                    //   leading: const Icon(Icons.directions_walk, color: Colors.teal),
+                    //   title: const Text("Step Goal"),
+                    //   trailing: Row(
+                    //     mainAxisSize: MainAxisSize.min,
+                    //     children: [
+                    //       Text("${goalProvider.stepGoal} steps", style: const TextStyle(fontWeight: FontWeight.bold)),
+                    //       const Icon(Icons.chevron_right, color: Colors.grey),
+                    //     ],
+                    //   ),
+                    //   onTap: () => _showEditStepGoalDialog(context, goalProvider),
+                    // ),
+                    // const Divider(height: 1),
+                    // ListTile(
+                    //   leading: const Icon(Icons.bedtime, color: Colors.indigo),
+                    //   title: const Text("Sleep Goal"),
+                    //   trailing: Row(
+                    //     mainAxisSize: MainAxisSize.min,
+                    //     children: [
+                    //       Text("${goalProvider.sleepGoal} hrs", style: const TextStyle(fontWeight: FontWeight.bold)),
+                    //       const Icon(Icons.chevron_right, color: Colors.grey),
+                    //     ],
+                    //   ),
+                    //   onTap: () => _showEditSleepGoalDialog(context, goalProvider),
+                    // ),
                   ],
                 ),
               );
@@ -135,7 +147,26 @@ class _ProfileViewState extends State<ProfileView> {
                   title: const Text("Backup to Cloud"),
                   subtitle: const Text("Save your local data to your account"),
                   trailing: _isSyncing ? const CircularProgressIndicator() : const Icon(Icons.chevron_right),
-                  onTap: _isSyncing ? null : _handleBackup,
+                  onTap: _isSyncing ? null : () {
+                    // Always confirm before overwriting cloud data
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Backup Data?"),
+                        content: const Text("This will overwrite current cloud data with your local data. Are you sure?"),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _handleBackup();
+                            }, 
+                            child: const Text("Backup", style: TextStyle(color: Colors.orange))
+                          ),
+                        ],
+                      )
+                    );
+                  }
                 ),
                 const Divider(height: 1),
 
@@ -158,7 +189,7 @@ class _ProfileViewState extends State<ProfileView> {
                               Navigator.pop(context);
                               _handleRestore();
                             }, 
-                            child: const Text("Restore", style: TextStyle(color: Colors.red))
+                            child: const Text("Restore", style: TextStyle(color: Colors.orange))
                           ),
                         ],
                       )
@@ -198,10 +229,11 @@ class _ProfileViewState extends State<ProfileView> {
                       onPressed: () async {
                         Navigator.pop(context); // Close dialog
                         
-                        // 1. Wipe the Communal Whiteboard (Daily Records AND Chat History)
-                        final db = context.read<AppDatabase>();
-                        await db.clearAllDailyRecords();
-                        await db.clearChatHistory();
+                        // // 1. Wipe the Communal Whiteboard (Daily Records AND Chat History)
+                        // // comment out during authentication testing
+                        // final db = context.read<AppDatabase>();
+                        // await db.clearAllDailyRecords();
+                        // await db.clearChatHistory();
                         
                         // 2. Hand back the keycard (Log out)
                         await AuthService().signOut();

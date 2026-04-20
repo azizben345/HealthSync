@@ -101,7 +101,10 @@ class _HistoryViewState extends State<HistoryView> {
   }
 
   // --- SLEEK LIST VIEW ---
+  // --- UPGRADED EXPANDABLE LIST VIEW ---
   Widget _buildListView(List<DailyRecord> records, HistoryController historyCtrl) {
+    final db = context.read<AppDatabase>(); // Need this for the delete function
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       itemCount: records.length,
@@ -109,71 +112,137 @@ class _HistoryViewState extends State<HistoryView> {
         final record = records[index];
         final dateString = DateFormat.yMMMd().format(record.date);
 
-        return Dismissible(
-          key: Key(record.id.toString()),
-          background: Container(
-            color: Colors.red,
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20),
-            child: const Icon(Icons.delete, color: Colors.white),
-          ),
-          direction: DismissDirection.endToStart,
-          onDismissed: (direction) => historyCtrl.deleteSingleRecord(record.id),
-          child: Card(
-            margin: const EdgeInsets.only(bottom: 16.0),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Row: Date & Badges
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(dateString, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.teal)),
-                      Row(
-                        children: [
-                          // Retry AI Button (If it failed)
-                          if (record.avatarState == 'pending') 
-                            historyCtrl.isRetrying(record.id)
-                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                                : IconButton(
-                                    icon: const Icon(Icons.refresh, color: Colors.blue, size: 20),
-                                    onPressed: () => historyCtrl.retryPendingAI(record),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                          const SizedBox(width: 8),
-                          // Workout Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              record.workoutType ?? "Rest",
-                              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onPrimaryContainer),
-                            ),
-                          ),
-                        ],
+        return Card(
+          margin: const EdgeInsets.only(bottom: 16.0),
+          clipBehavior: Clip.antiAlias, // Keeps the corners rounded when expanded
+          // ExpansionTile is the magic widget that handles the drop-down animation!
+          child: ExpansionTile(
+            // --- SIMPLIFIED VIEW (Always Visible) ---
+            title: Text(dateString, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.teal)),
+            subtitle: Text("Steps: ${record.steps} • Sleep: ${record.sleepHours}h\nDiet: ${record.dietQuality} • Workout: ${record.workoutType}", style: const TextStyle(color: Colors.grey)),
+            leading: Icon(_getIconForState(record.avatarState), color: _getColorForState(record.avatarState)),
+            
+            // --- DETAILED VIEW (Revealed on Tap) ---
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Divider(),
+
+                    // DETAILED WORKOUTS LIST
+                    StreamBuilder<List<Workout>>(
+                      stream: db.watchWorkoutsForDate(record.date),
+                      builder: (context, snapshot) {
+                        final workouts = snapshot.data ?? [];
+                        if (workouts.isEmpty) return const SizedBox(); // Hide if no workouts
+                        
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Workouts", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                            const SizedBox(height: 4),
+                            ...workouts.map((w) => ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.fitness_center, color: Colors.teal, size: 20),
+                              title: Text(w.activityName, style: const TextStyle(fontWeight: FontWeight.w500)),
+                              subtitle: Text("${w.durationMinutes} mins"),
+                              trailing: w.caloriesBurned != null ? Text("${w.caloriesBurned} kcal", style: const TextStyle(color: Colors.grey)) : null,
+                            )),
+                            const SizedBox(height: 16),
+                          ],
+                        );
+                      }
+                    ),
+
+                    // DETAILED MEALS LIST
+                    StreamBuilder<List<Meal>>(
+                      stream: db.watchMealsForDate(record.date),
+                      builder: (context, snapshot) {
+                        final meals = snapshot.data ?? [];
+                        if (meals.isEmpty) return const SizedBox(); // Hide if no meals
+                        
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Meals", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                            const SizedBox(height: 4),
+                            ...meals.map((m) => ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.restaurant, color: Colors.orange, size: 20),
+                              title: Text(m.mealName, style: const TextStyle(fontWeight: FontWeight.w500)),
+                              subtitle: Text(m.mealType),
+                              trailing: m.calories != null ? Text("${m.calories} kcal", style: const TextStyle(color: Colors.grey)) : null,
+                            )),
+                            const SizedBox(height: 16),
+                          ],
+                        );
+                      }
+                    ),
+
+                    // 1. THE DIARY
+                    if (record.diaryNote != null && record.diaryNote!.isNotEmpty) ...[
+                      const Text("Journal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                      const SizedBox(height: 4),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                        ),
+                        child: Text("\"${record.diaryNote}\"", style: const TextStyle(fontStyle: FontStyle.italic)),
                       ),
+                      const SizedBox(height: 16),
                     ],
-                  ),
-                  const Divider(height: 24),
-                  
-                  // Metrics Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildMetric(Icons.directions_walk, "${record.steps}", "Steps"),
-                      _buildMetric(Icons.bedtime, "${record.sleepHours}h", "Sleep"),
-                      _buildMetric(Icons.restaurant, record.dietQuality ?? "-", "Diet"),
+
+                    // 2. THE AI COACH MESSAGE
+                    if (record.coachMessage != null && record.coachMessage!.isNotEmpty) ...[
+                      const Text("Coach Feedback", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                      const SizedBox(height: 4),
+                      Text(record.coachMessage!, style: const TextStyle(color: Colors.teal)),
+                      const SizedBox(height: 16),
                     ],
-                  ),
-                ],
+
+                    const Divider(),
+
+                    // 3. THE EXPLICIT DELETE BUTTON
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.delete_forever, color: Colors.red),
+                        label: const Text("Delete Log", style: TextStyle(color: Colors.red)),
+                        onPressed: () {
+                          // The Safety Confirmation Dialog
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text("Delete Log?"),
+                              content: const Text("This will permanently delete this day's health data, meals, and workouts. You cannot undo this."),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                                FilledButton(
+                                  style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                                  onPressed: () {
+                                    db.deleteEntireDay(record.id); // Triggers the cascade delete
+                                    Navigator.pop(context); // Close dialog
+                                  },
+                                  child: const Text("Delete"),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         );
       },
@@ -328,4 +397,27 @@ class _HistoryViewState extends State<HistoryView> {
       default: return '';
     }
   }
+  // --- UI HELPERS ---
+  Color _getColorForState(String state) {
+    switch (state.toLowerCase()) {
+      case 'happy': return Colors.green;
+      case 'proud': return Colors.purple;
+      case 'tired': return Colors.orange;
+      case 'gloomy': return Colors.blueGrey;
+      case 'pending': return Colors.grey;
+      default: return Colors.teal;
+    }
+  }
+
+  IconData _getIconForState(String state) {
+    switch (state.toLowerCase()) {
+      case 'happy': return Icons.sentiment_very_satisfied;
+      case 'proud': return Icons.star;
+      case 'tired': return Icons.bedtime;
+      case 'gloomy': return Icons.sentiment_dissatisfied;
+      case 'pending': return Icons.hourglass_empty;
+      default: return Icons.person;
+    }
+  }
+
 }

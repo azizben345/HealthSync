@@ -20,6 +20,60 @@ class DailyRecords extends Table {
   TextColumn get workoutType => text().withDefault(const Constant('Rest'))();
 }
 
+// TABLE: Workouts
+// A user can log multiple workouts in a single day.
+class Workouts extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  
+  // This Foreign Key links the workout to a specific Daily Record!
+  IntColumn get dailyRecordId => integer().references(DailyRecords, #id)(); 
+  
+  TextColumn get activityName => text()(); // e.g., "Running", "Weightlifting"
+  IntColumn get durationMinutes => integer()();
+  IntColumn get caloriesBurned => integer().nullable()(); // Made optional
+}
+
+// TABLE: Meals
+// A user can log multiple meals (Breakfast, Lunch, Snack).
+class Meals extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get dailyRecordId => integer().references(DailyRecords, #id)();
+  
+  TextColumn get mealName => text()(); // e.g., "Chicken Salad"
+  TextColumn get mealType => text()(); // e.g., "Breakfast", "Lunch"
+  IntColumn get calories => integer().nullable()(); // Made optional
+}
+
+// TABLE: MoodSymptoms
+// Holds the detailed 1-10 sliders for their mental state.
+class MoodSymptoms extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get dailyRecordId => integer().references(DailyRecords, #id)();
+  
+  IntColumn get moodScore => integer().withDefault(const Constant(5))(); // The core 1-10 score
+  IntColumn get anxietyLevel => integer().nullable()(); // 1-10
+  IntColumn get productivityLevel => integer().nullable()(); // 1-10
+  IntColumn get motivationLevel => integer().nullable()(); // 1-10
+}
+
+// TABLE: UserGoals
+// A "Singleton" table. We only ever keep ONE row in here (ID = 1).
+@DataClassName('UserGoal')
+class UserGoals extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  
+  // Fitness Goals
+  IntColumn get targetSteps => integer().withDefault(const Constant(8000))();
+  RealColumn get targetSleep => real().withDefault(const Constant(7.5))();
+  IntColumn get targetWorkoutMinutesWeekly => integer().withDefault(const Constant(150))();
+  
+  // Nutrition Goal
+  IntColumn get targetDailyCalories => integer().withDefault(const Constant(2200))();
+  
+  // Mood Goal
+  RealColumn get targetAvgMood => real().withDefault(const Constant(6.0))();
+}
+
 // Chatbot History
 class ChatHistory extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -29,7 +83,7 @@ class ChatHistory extends Table {
 }
 
 // 2. Initialize the Database
-@DriftDatabase(tables: [DailyRecords, ChatHistory])
+@DriftDatabase(tables: [DailyRecords, ChatHistory, Workouts, Meals, MoodSymptoms, UserGoals])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -107,6 +161,138 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  // 1. THE HELPER: Guarantees a Daily Record exists and returns its ID
+  Future<int> _ensureDailyRecordExists(DateTime date) async {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1, milliseconds: -1));
+
+    final existingRecord = await (select(dailyRecords)
+          ..where((t) => t.date.isBetweenValues(startOfDay, endOfDay)))
+        .getSingleOrNull();
+
+    if (existingRecord != null) {
+      return existingRecord.id; // It exists! Return the ID.
+    } else {
+      // doesn't exist yet - create a blank placeholder and return the new ID.
+      return await into(dailyRecords).insert(
+        DailyRecordsCompanion.insert(
+          date: Value(startOfDay),
+          steps: 0,
+          sleepHours: 0.0,
+          dietQuality: const Value('Normal'),
+          workoutType: const Value('Rest'),
+          avatarState: 'idle', 
+          diaryNote: '', 
+          // We leave diary and coachMessage null
+        ),
+      );
+    }
+  }
+
+  // 2. SAVE WORKOUT
+  Future<void> addDetailedWorkout(DateTime date, String name, int duration, int? calories) async {
+    final recordId = await _ensureDailyRecordExists(date); // Get the parent ID
+    
+    await into(workouts).insert(
+      WorkoutsCompanion.insert(
+        dailyRecordId: recordId, // Link it!
+        activityName: name,
+        durationMinutes: duration,
+        caloriesBurned: Value(calories),
+      ),
+    );
+  }
+
+  // 3. SAVE MEAL
+  Future<void> addDetailedMeal(DateTime date, String name, String type, int? calories) async {
+    final recordId = await _ensureDailyRecordExists(date); // Get the parent ID
+    
+    await into(meals).insert(
+      MealsCompanion.insert(
+        dailyRecordId: recordId, // Link it!
+        mealName: name,
+        mealType: type,
+        calories: Value(calories),
+      ),
+    );
+  }
+
+  // Live Stream of Workouts for a specific calendar day
+  Stream<List<Workout>> watchWorkoutsForDate(DateTime date) {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1, milliseconds: -1));
+
+    return (select(workouts)
+          // Ask SQLite: "Give me workouts where the dailyRecordId matches this specific date"
+          ..where((w) => w.dailyRecordId.isInQuery(
+                selectOnly(dailyRecords)
+                  ..addColumns([dailyRecords.id])
+                  ..where(dailyRecords.date.isBetweenValues(startOfDay, endOfDay))
+              )))
+        .watch();
+  }
+
+  // Live Stream of Meals for a specific calendar day
+  Stream<List<Meal>> watchMealsForDate(DateTime date) {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1, milliseconds: -1));
+
+    return (select(meals)
+          ..where((m) => m.dailyRecordId.isInQuery(
+                selectOnly(dailyRecords)
+                  ..addColumns([dailyRecords.id])
+                  ..where(dailyRecords.date.isBetweenValues(startOfDay, endOfDay))
+              )))
+        .watch();
+  }
+
+  // --- GOAL SETTING LOGIC ---
+
+  // 1. Fetch the user's goals (and create defaults if they don't exist yet)
+  Future<UserGoal> getUserGoal() async {
+    final goal = await select(userGoals).getSingleOrNull();
+    if (goal != null) return goal;
+
+    // First time opening the app? Insert the default values we defined in the schema!
+    await into(userGoals).insert(const UserGoalsCompanion());
+    return await select(userGoals).getSingle();
+  }
+
+  // 2. Update the singleton row
+  Future<void> updateUserGoal({
+    required int steps,
+    required double sleep,
+    required int workoutMins,
+    required int calories,
+    required double mood,
+  }) async {
+    final existing = await select(userGoals).getSingleOrNull();
+    
+    if (existing != null) {
+      // Overwrite the existing row
+      await update(userGoals).replace(
+        existing.copyWith(
+          targetSteps: steps,
+          targetSleep: sleep,
+          targetWorkoutMinutesWeekly: workoutMins,
+          targetDailyCalories: calories,
+          targetAvgMood: mood,
+        ),
+      );
+    } else {
+      // Failsafe in case it somehow got deleted
+      await into(userGoals).insert(
+        UserGoalsCompanion.insert(
+          targetSteps: Value(steps),
+          targetSleep: Value(sleep),
+          targetWorkoutMinutesWeekly: Value(workoutMins),
+          targetDailyCalories: Value(calories),
+          targetAvgMood: Value(mood),
+        ),
+      );
+    }
+  }
+
   // function to fetch a single day's record to populate the UI
   Future<DailyRecord?> getRecordByDate(DateTime date) async {
     final startOfDay = DateTime(date.year, date.month, date.day);
@@ -124,6 +310,17 @@ class AppDatabase extends _$AppDatabase {
   // }
   Future<List<DailyRecord>> getAllLoggedRecords() async {
     return await select(dailyRecords).get();
+  }
+
+  // delete a daily record AND all its attached details
+  Future<void> deleteEntireDay(int recordId) async {
+    // 1. Delete the children first
+    await (delete(workouts)..where((w) => w.dailyRecordId.equals(recordId))).go();
+    await (delete(meals)..where((m) => m.dailyRecordId.equals(recordId))).go();
+    await (delete(moodSymptoms)..where((m) => m.dailyRecordId.equals(recordId))).go();
+    
+    // 2. Delete the parent
+    await (delete(dailyRecords)..where((d) => d.id.equals(recordId))).go();
   }
 
 }

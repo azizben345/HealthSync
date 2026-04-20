@@ -66,10 +66,16 @@ class _AuthViewState extends State<AuthView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.health_and_safety, size: 80, color: Colors.blueAccent),
+                  // const Icon(Icons.health_and_safety, size: 80, color: Colors.blueAccent),
+                  Image.asset(
+                    'assets/icon/app_icon.png',
+                    
+                    // width: 120,
+                    // height: 120,
+                  ),
                   const SizedBox(height: 16),
                   Text(
-                    _isLogin ? "Welcome Back" : "Join HealthSync",
+                    _isLogin ? "HealthSync" : "Join HealthSync",
                     style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 24),
