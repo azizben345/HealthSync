@@ -118,9 +118,12 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // get list of all dates that has logged data
-  Future<List<DateTime>> getAllLoggedDates() async {
-    final records = await select(dailyRecords).get();
-    return records.map((r) => r.date).toList();
+  // Future<List<DateTime>> getAllLoggedDates() async {
+  //   final records = await select(dailyRecords).get();
+  //   return records.map((r) => r.date).toList();
+  // }
+  Future<List<DailyRecord>> getAllLoggedRecords() async {
+    return await select(dailyRecords).get();
   }
 
 }

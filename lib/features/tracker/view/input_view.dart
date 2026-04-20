@@ -30,7 +30,7 @@ class _InputViewState extends State<InputView> {
   // flag to track either updating existing data or creating new data
   bool _hasExistingData = false;
   // set of dates to tell the calendar where to draw dots - indicated logged dates
-  Set<DateTime> _loggedDates = {};
+  Map<DateTime, String> _loggedDates = {};
 
   @override
   void initState() {
@@ -68,6 +68,8 @@ class _InputViewState extends State<InputView> {
         _dietQuality = 'Normal';
         _workoutType = 'Rest';
         _diaryController.text = '';
+        // reset/clear the avatar state
+        context.read<AvatarController>().resetState();
       }
     });
   }
@@ -75,10 +77,16 @@ class _InputViewState extends State<InputView> {
   // fetch list of dates from database
   Future<void> _refreshCalendarDots() async {
     final db = context.read<AppDatabase>();
-    final dates = await db.getAllLoggedDates();
+    final records = await db.getAllLoggedRecords();
+    
+    final Map<DateTime, String> newMap = {};
+    for (var r in records) {
+      final normDate = DateTime(r.date.year, r.date.month, r.date.day);
+      newMap[normDate] = r.avatarState; // Link the date to the emotion!
+    }
+    
     setState(() {
-      // Normalize them so they match the calendar perfectly
-      _loggedDates = dates.map((d) => DateTime(d.year, d.month, d.day)).toSet();
+      _loggedDates = newMap;
     });
   }
 
@@ -396,13 +404,37 @@ class _InputViewState extends State<InputView> {
                     calendarFormat: CalendarFormat.month,
                     availableCalendarFormats: const {CalendarFormat.month: 'Month'},
                     
-                    // THIS IS THE MAGIC: It checks if the day is in our database list
+                    // checks if the day is in our database list
                     eventLoader: (day) {
                       final normalizedDay = DateTime(day.year, day.month, day.day);
-                      return _loggedDates.contains(normalizedDay) ? ['Logged'] : [];
+                      // if it exists, pass the state string. else, empty list.
+                      return _loggedDates.containsKey(normalizedDay) ? [_loggedDates[normalizedDay]] : []; 
                     },
+
+                    // custom draw the dots based on the emotion
+                    calendarBuilders: CalendarBuilders(
+                      markerBuilder: (context, date, events) {
+                        if (events.isEmpty) return const SizedBox(); // No events, no dot
+                        
+                        // Grab the emotion string we passed in the eventLoader
+                        final stateString = events.first as String; 
+                        final dotColor = _getColorForState(stateString);
+
+                        return Positioned(
+                          bottom: 4,
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: dotColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                     
-                    // Styling to make it match your theme
+                    // Styling to match theme
                     calendarStyle: CalendarStyle(
                       markerDecoration: const BoxDecoration(color: Colors.teal, shape: BoxShape.circle),
                       todayDecoration: BoxDecoration(color: Colors.teal.withOpacity(0.3), shape: BoxShape.circle),
@@ -425,6 +457,17 @@ class _InputViewState extends State<InputView> {
         );
       },
     );
+  }
+
+  Color _getColorForState(String state) {
+    switch (state.toLowerCase()) {
+      case 'happy': return Colors.green;
+      case 'proud': return Colors.purple;
+      case 'tired': return Colors.orange;
+      case 'gloomy': return Colors.blueGrey;
+      case 'pending': return Colors.grey;
+      default: return Colors.teal; // Fallback
+    }
   }
 
 }

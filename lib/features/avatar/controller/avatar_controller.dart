@@ -65,6 +65,7 @@ class AvatarController extends ChangeNotifier {
         workout: workout,
         diary: diary,
         avatarState: _avatarState,
+        coachMessage: _coachMessage
       );
 
       _isLoading = false;
@@ -72,6 +73,13 @@ class AvatarController extends ChangeNotifier {
     }
   }
 
+  // resets the avatar to its default state for empty days
+  void resetState() {
+    _avatarState = 'idle'; // Or whatever your default animation string is
+    _coachMessage = "Ready to sync?";
+    _isLoading = false;
+    notifyListeners();
+  }
   Future<void> setHistoricalState(String state, String message) async {
     _avatarState = state;
     _coachMessage = message;
