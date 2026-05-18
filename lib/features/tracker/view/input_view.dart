@@ -13,6 +13,7 @@ import 'widgets/meal_modal.dart';
 import 'widgets/nutrition_input_card.dart';
 import 'widgets/mood_input_card.dart';
 import 'widgets/workout_modal.dart';
+import 'widgets/daily_progress_rings.dart';
 
 class InputView extends StatefulWidget {
   const InputView({super.key});
@@ -31,6 +32,9 @@ class _InputViewState extends State<InputView> {
   String _workoutType = 'Rest';
   double _moodScore = 5.0;
   bool _isFetchingHealth = false;
+  // Persisted State (for Progress Rings)
+  double _savedSteps = 0;
+  double _savedSleep = 0;
 
   // keep track of which day users are logging for (defaults to today)
   DateTime _selectedDate = DateTime.now();
@@ -56,13 +60,19 @@ class _InputViewState extends State<InputView> {
 
     setState(() {
       if (record != null) {
-        // MATCH FOUND: Auto-fill the form with their past data!
+        // MATCH FOUND: Auto-fill the form with their past data
         _hasExistingData = true;
+
         _steps = record.steps.toDouble();
         _sleep = record.sleepHours;
+
+        _savedSteps = _steps;
+        _savedSleep = _sleep;
+
         _dietQuality = record.dietQuality ?? 'Normal';
         _workoutType = record.workoutType ?? 'Rest';
         _diaryController.text = record.diaryNote ?? '';
+
         context.read<AvatarController>().setHistoricalState(
           record.avatarState, 
           record.coachMessage ?? "I still haven't respond to this date's logs",
@@ -70,11 +80,17 @@ class _InputViewState extends State<InputView> {
       } else {
         // NO MATCH: Reset the form to default blank states
         _hasExistingData = false;
+
         _steps = 5000;
         _sleep = 7.0;
+
+        _savedSteps = 0;
+        _savedSleep = 0;
+
         _dietQuality = 'Normal';
         _workoutType = 'Rest';
         _diaryController.text = '';
+
         // reset/clear the avatar state
         context.read<AvatarController>().resetState();
       }
@@ -208,6 +224,17 @@ class _InputViewState extends State<InputView> {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
+
+            // PROGRESS RINGS
+            DailyProgressRings(
+              currentSteps: _savedSteps,
+              currentSleep: _savedSleep,
+              selectedDate: _selectedDate,
+            ),
+            
+            // const SizedBox(height: 24),
+
             const SizedBox(height: 32),
 
             // // 2. ACTIVITY CARD (Steps & Workout)
@@ -296,7 +323,7 @@ class _InputViewState extends State<InputView> {
             // const SizedBox(height: 24),
 
             // 3. RECOVERY CARD (Sleep & Diet)
-            // 3. THE REFACTORED LEGO BLOCKS
+            // THE REFACTORED LEGO BLOCKS
             FitnessInputCard(
               selectedDate: _selectedDate,
               steps: _steps,
@@ -307,7 +334,7 @@ class _InputViewState extends State<InputView> {
               onSleepChanged: (val) => setState(() => _sleep = val),
               onWorkoutChanged: (val) => setState(() => _workoutType = val),
               onAutoFill: () async {
-                // Keep your HealthService logic here!
+                // HealthService logic
                 setState(() => _isFetchingHealth = true);
                 final steps = await HealthService().fetchTodaySteps();
                 if (steps != null) {
@@ -374,6 +401,8 @@ class _InputViewState extends State<InputView> {
                     workout: _workoutType,
                     date: _selectedDate,
                   );
+                  // Reload the data so the Rings update
+                  await _loadDataForSelectedDate();
                   // Refresh calendar dots after saving!
                   _refreshCalendarDots(); 
                 },

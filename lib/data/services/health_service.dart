@@ -1,39 +1,35 @@
 import 'package:health/health.dart';
 
 class HealthService {
-  // Initialize the health plugin
+  // Initialize the Health plugin
   final Health _health = Health();
 
   Future<int?> fetchTodaySteps() async {
-    
-    // _health.configure(useHealthConnectIfAvailable: true);
-    
-    // only want steps for now
+    // Define exactly what data you want to read
     final types = [HealthDataType.STEPS];
     final permissions = [HealthDataAccess.READ];
 
     try {
-      // 1. Check if we already have permission
-      bool? hasPermissions = await _health.hasPermissions(types, permissions: permissions);
-      
-      // 2. If not, ask the user for permission (This triggers the Android popup)
-      if (hasPermissions != true) {
-        hasPermissions = await _health.requestAuthorization(types, permissions: permissions);
-      }
+      // FIX: Just call configure() empty! Health Connect is now the default.
+      _health.configure();
 
-      // 3. If they said yes, fetch the data!
-      if (hasPermissions == true) {
+      // Request authorization
+      bool hasPermission = await _health.requestAuthorization(types, permissions: permissions);
+
+      if (hasPermission) {
         final now = DateTime.now();
         final midnight = DateTime(now.year, now.month, now.day);
-        
-        // Grab all steps from 12:00 AM today until right now
+
+        // Fetch the steps safely
         int? steps = await _health.getTotalStepsInInterval(midnight, now);
+        
         return steps ?? 0;
       } else {
-        throw Exception("Permission denied by user.");
+        print("User denied Health Connect permissions.");
+        return null;
       }
     } catch (e) {
-      print("Health API Error: $e");
+      print("Error communicating with Health Connect: $e");
       return null;
     }
   }
