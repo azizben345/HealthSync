@@ -21,12 +21,31 @@ class _HistoryViewState extends State<HistoryView> {
   Future<void> _showDatabasePath(BuildContext context) async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'fyp_tracker.sqlite'));
+    
+    // Calculate the file size in Kilobytes
+    String sizeText = "0 KB";
+    if (file.existsSync()) {
+      final bytes = file.lengthSync();
+      sizeText = "${(bytes / 1024).toStringAsFixed(2)} KB";
+    }
+
     if (!context.mounted) return; 
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Database Location"),
-        content: SelectableText(file.path),
+        title: const Text("Database Info"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min, // Prevents the dialog from taking the whole screen
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("File Path:", style: TextStyle(fontWeight: FontWeight.bold)),
+            SelectableText(file.path, style: const TextStyle(fontSize: 12)),
+            const SizedBox(height: 16),
+            const Text("Local Storage Size:", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(sizeText, style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
+          ],
+        ),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
       ),
     );
@@ -183,6 +202,34 @@ class _HistoryViewState extends State<HistoryView> {
                       }
                     ),
 
+                    // DETAILED MOOD RATING
+                    FutureBuilder(
+                      // Fetch the isolated mood data using the parent record's ID
+                      future: db.getMoodForRecord(record.id),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData || snapshot.data == null) return const SizedBox(); // Hide if empty
+                        
+                        final mood = snapshot.data!;
+                        
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Mental Well-being", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                            const SizedBox(height: 4),
+                            ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.psychology, color: Colors.purple, size: 20),
+                              title: const Text("Mood Score", style: TextStyle(fontWeight: FontWeight.w500)),
+                              // Display the integer score out of 10
+                              trailing: Text("${mood.moodScore} / 10", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        );
+                      }
+                    ),
+
                     // 1. THE DIARY
                     if (record.diaryNote != null && record.diaryNote!.isNotEmpty) ...[
                       const Text("Journal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
@@ -249,16 +296,16 @@ class _HistoryViewState extends State<HistoryView> {
     );
   }
 
-  Widget _buildMetric(IconData icon, String value, String label) {
-    return Column(
-      children: [
-        Icon(icon, color: Colors.grey, size: 20),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-      ],
-    );
-  }
+  // Widget _buildMetric(IconData icon, String value, String label) {
+  //   return Column(
+  //     children: [
+  //       Icon(icon, color: Colors.grey, size: 20),
+  //       const SizedBox(height: 4),
+  //       Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+  //       Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+  //     ],
+  //   );
+  // }
 
   // --- ANALYTICS CHART VIEW ---
   Widget _buildChartView(List<DailyRecord> records) {

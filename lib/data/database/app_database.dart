@@ -108,7 +108,13 @@ class AppDatabase extends _$AppDatabase {
   Future<int> insertChatMessage(ChatHistoryCompanion message) => into(chatHistory).insert(message);
   Future<int> clearChatHistory() => delete(chatHistory).go();
   // clear all local daily records - used for Cloud Restore feature
-  Future<int> clearAllDailyRecords() => delete(dailyRecords).go();
+  // Future<int> clearAllDailyRecords() => delete(dailyRecords).go();
+  Future<void> clearAllDailyRecords() async {
+    await delete(meals).go();
+    await delete(workouts).go();
+    await delete(moodSymptoms).go();
+    await delete(dailyRecords).go();
+  }
 
   // For Calendar Function: Time-Traveling Upsert Function
   Future<void> saveOrUpdateDailyLog({
@@ -217,6 +223,34 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  // SAVE MOOD DATA
+  Future<void> saveMoodDetail(DateTime date, double score) async {
+    final record = await getRecordByDate(date);
+    if (record == null) return; 
+
+    // NEW: Convert the Flutter double (e.g., 5.0) into an SQLite integer (5)
+    final int intScore = score.toInt();
+
+    final existingMood = await (select(moodSymptoms)
+          ..where((tbl) => tbl.dailyRecordId.equals(record.id)))
+        .getSingleOrNull();
+
+    if (existingMood != null) {
+      // UPDATE: Pass the integer
+      await update(moodSymptoms).replace(
+        existingMood.copyWith(moodScore: intScore), 
+      );
+    } else {
+      // INSERT: Wrap the integer in Drift's Value() object
+      await into(moodSymptoms).insert(
+        MoodSymptomsCompanion.insert(
+          dailyRecordId: record.id,
+          moodScore: Value(intScore), // <-- Drift needs this explicitly wrapped in Value()
+        ),
+      );
+    }
+  }
+
   // Live Stream of Workouts for a specific calendar day
   Stream<List<Workout>> watchWorkoutsForDate(DateTime date) {
     final startOfDay = DateTime(date.year, date.month, date.day);
@@ -310,6 +344,19 @@ class AppDatabase extends _$AppDatabase {
   // }
   Future<List<DailyRecord>> getAllLoggedRecords() async {
     return await select(dailyRecords).get();
+  }
+  
+  // --- SYNC HELPER FUNCTIONS ---
+  Future<List<Meal>> getMealsForRecord(int recordId) {
+    return (select(meals)..where((tbl) => tbl.dailyRecordId.equals(recordId))).get();
+  }
+  
+  Future<List<Workout>> getWorkoutsForRecord(int recordId) {
+    return (select(workouts)..where((tbl) => tbl.dailyRecordId.equals(recordId))).get();
+  }
+  
+  Future<MoodSymptom?> getMoodForRecord(int recordId) {
+    return (select(moodSymptoms)..where((tbl) => tbl.dailyRecordId.equals(recordId))).getSingleOrNull();
   }
 
   // delete a daily record AND all its attached details

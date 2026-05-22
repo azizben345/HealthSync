@@ -36,6 +36,7 @@ class _InputViewState extends State<InputView> {
   double _savedSteps = 0;
   double _savedSleep = 0;
 
+
   // keep track of which day users are logging for (defaults to today)
   DateTime _selectedDate = DateTime.now();
   // flag to track either updating existing data or creating new data
@@ -89,6 +90,8 @@ class _InputViewState extends State<InputView> {
 
         _dietQuality = 'Normal';
         _workoutType = 'Rest';
+
+        _moodScore = 5.0;
         _diaryController.text = '';
 
         // reset/clear the avatar state
@@ -400,6 +403,7 @@ class _InputViewState extends State<InputView> {
                     diet: _dietQuality,
                     workout: _workoutType,
                     date: _selectedDate,
+                    moodScore: _moodScore,
                   );
                   // Reload the data so the Rings update
                   await _loadDataForSelectedDate();

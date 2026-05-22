@@ -28,6 +28,7 @@ class AvatarController extends ChangeNotifier {
     required String diet,     
     required String workout,
     required DateTime? date,
+    required double moodScore, 
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -67,6 +68,7 @@ class AvatarController extends ChangeNotifier {
         avatarState: _avatarState,
         coachMessage: _coachMessage
       );
+      await _db.saveMoodDetail(date ?? DateTime.now(), moodScore);
 
       _isLoading = false;
       notifyListeners();
