@@ -17,16 +17,37 @@ class AIService {
     String diary, 
     String diet, 
     String workout,
-    DateTime? date
+    DateTime? date, {String? contextBlock}
   ) async {
+    // final prompt = """
+    //   You are an AI character engine. 
+    //   Analyze the user's data and return creative message. 
+    //   Only relate data to note if relevant.
+    //   Return ONLY JSON.
+    //   Data: Steps: $steps, Sleep: $sleep, Diet: "$diet", Workout: "$workout", Note: "$diary"
+    //   Return format: {"state": "happy"|"tired"|"gloomy"|"proud", "message": "string"}
+    // """;
+
+    // Combine the context block with the instructions
     final prompt = """
-      You are an AI character engine. 
-      Analyze the user's data and return creative message. 
-      Only relate data to note if relevant.
-      Return ONLY JSON.
-      Data: Steps: $steps, Sleep: $sleep, Diet: "$diet", Workout: "$workout", Note: "$diary"
-      Return format: {"state": "happy"|"tired"|"gloomy"|"proud", "message": "string"}
-    """;
+${contextBlock ?? ''}
+
+User's Journal Entry: "${diary.isEmpty ? 'No journal entry.' : diary}"
+
+You are an empathetic, highly observant health coach. Review the user's data and journal entry.
+
+INSTRUCTIONS:
+1. Write a short, 1-2 sentence supportive message.
+2. Only reference specific meals or workouts if they naturally explain how the user is feeling (e.g., eating a heavy meal causing sluggishness, or a great workout boosting mood). 
+3. If the meals/workouts aren't relevant to the journal entry, ignore them and focus purely on supporting the user's current vibe or core metrics (steps/sleep). Do not force awkward references.
+4. Prioritize a natural, conversational, and human tone.
+
+Return only JSON, format:
+{
+  "state": "happy" | "tired" | "gloomy" | "proud" | "pending",
+  "message": "Your 1-2 sentence response here"
+}
+""";
 
     try {
       final content = [Content.text(prompt)];

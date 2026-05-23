@@ -63,13 +63,13 @@ class _HistoryViewState extends State<HistoryView> {
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
-              if (value == 'mock') historyCtrl.generateMockData();
+              // if (value == 'mock') historyCtrl.generateMockData();
               if (value == 'clear') historyCtrl.clearAllData();
               if (value == 'path') _showDatabasePath(context);
             },
             itemBuilder: (BuildContext context) => [
               const PopupMenuItem(value: 'path', child: Text("Show DB Path")),
-              const PopupMenuItem(value: 'mock', child: Text("Inject Mock Data")),
+              // const PopupMenuItem(value: 'mock', child: Text("Inject Mock Data")),
               const PopupMenuItem(value: 'clear', child: Text("Clear All Data", style: TextStyle(color: Colors.red))),
             ],
           ),

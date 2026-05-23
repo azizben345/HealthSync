@@ -266,6 +266,18 @@ class AppDatabase extends _$AppDatabase {
         .watch();
   }
 
+  // --- AI STATE UPDATE ---
+  Future<void> updateRecordState(int recordId, String newState, String newMessage) async {
+    // This performs a partial update, only touching the state and message columns
+    // without overwriting the steps, sleep, or other data on that row.
+    await (update(dailyRecords)..where((tbl) => tbl.id.equals(recordId))).write(
+      DailyRecordsCompanion(
+        avatarState: Value(newState),
+        coachMessage: Value(newMessage),
+      ),
+    );
+  }
+
   // Live Stream of Meals for a specific calendar day
   Stream<List<Meal>> watchMealsForDate(DateTime date) {
     final startOfDay = DateTime(date.year, date.month, date.day);

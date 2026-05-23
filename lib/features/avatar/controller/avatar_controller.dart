@@ -28,14 +28,46 @@ class AvatarController extends ChangeNotifier {
     required String diet,     
     required String workout,
     required DateTime? date,
-    required double moodScore, 
+    required double moodScore,
+    required AppDatabase db,
   }) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // 1. call Gemini service and send data via arguments
-      final result = await _aiService.getAvatarResponse(steps, sleep, diary, diet, workout, date);
+      // 1. FETCH THE RELATIONAL DATA USING THE INJECTED _db
+      final record = await _db.getRecordByDate(date ?? DateTime.now());
+      
+      List<dynamic> dayMeals = [];
+      List<dynamic> dayWorkouts = [];
+      
+      if (record != null) {
+        dayMeals = await _db.getMealsForRecord(record.id);
+        dayWorkouts = await _db.getWorkoutsForRecord(record.id);
+      }
+
+      // 2. BUILD THE CONTEXT STRING
+      final contextBlock = _buildPromptContext(
+        steps: steps,
+        sleep: sleep,
+        moodScore: moodScore,
+        meals: dayMeals,
+        workouts: dayWorkouts,
+      );
+
+      print("DEBUG CONTEXT BLOCK: \n$contextBlock");
+
+      // 3. CALL GEMINI SERVICE AND PASS THE NEW CONTEXT
+      // Note: You will need to add 'contextBlock' to your AIService function!
+      final result = await _aiService.getAvatarResponse(
+        steps, 
+        sleep, 
+        diary, 
+        diet, 
+        workout, 
+        date,
+        contextBlock: contextBlock, // <-- Injecting summary here
+      );
 
       _avatarState = result['state'] ?? 'neutral';
       _coachMessage = result['message'] ?? 'Keep going!';
@@ -75,6 +107,36 @@ class AvatarController extends ChangeNotifier {
     }
   }
 
+  // --- SUMMARIZER ---
+  String _buildPromptContext({
+    required int steps,
+    required double sleep,
+    required double moodScore,
+    required List<dynamic> meals,     // Passed from AppDatabase
+    required List<dynamic> workouts,  // Passed from AppDatabase
+  }) {
+    // 1. Format the Workouts
+    final workoutString = workouts.isEmpty 
+        ? "No specific workouts logged." 
+        : workouts.map((w) => "${w.activityName} (${w.durationMinutes} mins, ${w.caloriesBurned ?? 0} kcal)").join(", ");
+
+    // 2. Format the Meals
+    final mealString = meals.isEmpty 
+        ? "No specific meals logged." 
+        : meals.map((m) => "${m.mealName} (${m.calories ?? 0} kcal)").join(", ");
+
+    // 3. Build the highly condensed Context Block
+    return """
+[USER'S ACTUAL DATA FOR TODAY]
+- Steps: $steps
+- Sleep: $sleep hours
+- Mood: $moodScore / 10
+- Workouts: $workoutString
+- Meals: $mealString
+[/USER'S ACTUAL DATA FOR TODAY]
+""";
+  }
+
   // resets the avatar to its default state for empty days
   void resetState() {
     _avatarState = 'idle'; // Or whatever your default animation string is
@@ -88,27 +150,4 @@ class AvatarController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // // to generate mock data (can link to button)
-  // Future<void> generateMockData(AppDatabase db) async {
-  //   // Creating 3 days of fake history
-  //   final mockEntries = [
-  //     DailyRecordsCompanion.insert(
-  //       date: Value(DateTime.now().subtract(const Duration(days: 1))),
-  //       steps: 3000, sleepHours: 4.5, diaryNote: "Rough night and day.", avatarState: "tired",
-  //     ),
-  //     DailyRecordsCompanion.insert(
-  //       date: Value(DateTime.now().subtract(const Duration(days: 2))),
-  //       steps: 12000, sleepHours: 8.0, diaryNote: "Great workout!", avatarState: "proud",
-  //     ),
-  //     DailyRecordsCompanion.insert(
-  //       date: Value(DateTime.now().subtract(const Duration(days: 3))),
-  //       steps: 8000, sleepHours: 7.0, diaryNote: "Normal day.", avatarState: "happy",
-  //     ),
-  //   ];
-
-  //   for (var entry in mockEntries) {
-  //     await db.insertRecord(entry);
-  //   }
-  //   print("Mock data injected!");
-  // }
 }

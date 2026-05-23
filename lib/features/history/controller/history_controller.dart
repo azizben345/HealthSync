@@ -35,33 +35,34 @@ class HistoryController extends ChangeNotifier {
     await loadRecords();
   }
 
-  Future<void> generateMockData() async {
-    final mockEntries = [
-      DailyRecordsCompanion.insert(
-        date: drift.Value(DateTime.now().subtract(const Duration(days: 1))),
-        steps: 3000, sleepHours: 4.5, diaryNote: "Rough night and day.", avatarState: "tired",
-        dietQuality: const drift.Value("Normal"), 
-        workoutType: const drift.Value("Cardio"), 
-      ),
-      DailyRecordsCompanion.insert(
-        date: drift.Value(DateTime.now().subtract(const Duration(days: 2))),
-        steps: 12000, sleepHours: 8.0, diaryNote: "Great workout!", avatarState: "proud",
-        dietQuality: const drift.Value("Cheat Day"), 
-        workoutType: const drift.Value("Strength"),
-      ),
-      DailyRecordsCompanion.insert(
-        date: drift.Value(DateTime.now().subtract(const Duration(days: 3))),
-        steps: 8000, sleepHours: 7.0, diaryNote: "Normal day.", avatarState: "happy",
-        dietQuality: const drift.Value("Normal"), 
-        workoutType: const drift.Value("Cardio"),
-      ),
-    ];
+  // // GENERATE MOCK DATA
+  // Future<void> generateMockData() async {
+  //   final mockEntries = [
+  //     DailyRecordsCompanion.insert(
+  //       date: drift.Value(DateTime.now().subtract(const Duration(days: 1))),
+  //       steps: 3000, sleepHours: 4.5, diaryNote: "Rough night and day.", avatarState: "tired",
+  //       dietQuality: const drift.Value("Normal"), 
+  //       workoutType: const drift.Value("Cardio"), 
+  //     ),
+  //     DailyRecordsCompanion.insert(
+  //       date: drift.Value(DateTime.now().subtract(const Duration(days: 2))),
+  //       steps: 12000, sleepHours: 8.0, diaryNote: "Great workout!", avatarState: "proud",
+  //       dietQuality: const drift.Value("Cheat Day"), 
+  //       workoutType: const drift.Value("Strength"),
+  //     ),
+  //     DailyRecordsCompanion.insert(
+  //       date: drift.Value(DateTime.now().subtract(const Duration(days: 3))),
+  //       steps: 8000, sleepHours: 7.0, diaryNote: "Normal day.", avatarState: "happy",
+  //       dietQuality: const drift.Value("Normal"), 
+  //       workoutType: const drift.Value("Cardio"),
+  //     ),
+  //   ];
 
-    for (var entry in mockEntries) {
-      await _db.insertRecord(entry);
-    }
-    await loadRecords(); // refresh to update new mock data
-  }
+  //   for (var entry in mockEntries) {
+  //     await _db.insertRecord(entry);
+  //   }
+  //   await loadRecords(); // refresh to update new mock data
+  // }
 
   // Retry Logic
   Future<void> retryPendingAI(DailyRecord record) async {
@@ -70,38 +71,63 @@ class HistoryController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 2. Ask Gemini using the saved data from that day
+      // 1. FETCH THE RELATIONAL DATA FOR THIS SPECIFIC RECORD
+      final dayMeals = await _db.getMealsForRecord(record.id);
+      final dayWorkouts = await _db.getWorkoutsForRecord(record.id);
+      final dayMood = await _db.getMoodForRecord(record.id);
+      
+      // Fallback to 5.0 if somehow no mood was saved
+      final moodScore = dayMood?.moodScore ?? 5.0; 
+
+      // 2. BUILD THE SUMMARIZED CONTEXT
+      final workoutString = dayWorkouts.isEmpty 
+          ? "No specific workouts logged." 
+          : dayWorkouts.map((w) => "${w.activityName} (${w.durationMinutes} mins)").join(", ");
+
+      final mealString = dayMeals.isEmpty 
+          ? "No specific meals logged." 
+          : dayMeals.map((m) => "${m.mealName} (${m.calories ?? 0} kcal)").join(", ");
+
+      final contextBlock = """
+[SYSTEM CONTEXT - DO NOT MENTION THIS BLOCK TO THE USER]
+Today's Core Metrics:
+- Steps: ${record.steps}
+- Sleep: ${record.sleepHours} hours
+- Mood: $moodScore / 10
+
+Specific Details:
+- Workouts: $workoutString
+- Meals: $mealString
+[/SYSTEM CONTEXT]
+""";
+
+      // 3. PASS THE RICH CONTEXT TO THE AI SERVICE
       final result = await _aiService.getAvatarResponse(
         record.steps, 
         record.sleepHours, 
-        record.diaryNote,
-        record.dietQuality,
-        record.workoutType,
-        record.date
+        record.diaryNote ?? '', // Provide fallback empty string if null
+        record.dietQuality ?? 'Normal',
+        record.workoutType ?? 'Rest',
+        record.date, 
+        contextBlock: contextBlock, // <-- Injected here!
       );
-      
-      final newState = result['state'] ?? 'neutral';
 
-      // 3. Update that specific row in the database with the new state
-      await _db.updateRecord(
-        DailyRecordsCompanion(
-          id: drift.Value(record.id), // Must pass the ID so Drift knows WHICH row to update
-          date: drift.Value(record.date),
-          steps: drift.Value(record.steps),
-          sleepHours: drift.Value(record.sleepHours),
-          diaryNote: drift.Value(record.diaryNote),
-          avatarState: drift.Value(newState), // The new AI result!
-        ),
+      // 4. SAVE THE NEW AI RESPONSE TO THE DATABASE
+      await _db.updateRecordState(
+        record.id, 
+        result['state'] ?? 'neutral', 
+        result['message'] ?? 'Keep going!'
       );
 
     } catch (e) {
-      print("Retry API Error: $e");
-      // If it fails again, it just stays 'pending', no harm done.
-    } finally {
-      // 4. Remove loading state and refresh the list
-      _retryingIds.remove(record.id);
-      await loadRecords(); 
+      print("Retry AI Error: $e");
+      // Handle error state
     }
+    // finally {
+    //   // 4. Remove loading state and refresh the list
+    //   _retryingIds.remove(record.id);
+    //   await loadRecords(); 
+    // }
   }
 
 }

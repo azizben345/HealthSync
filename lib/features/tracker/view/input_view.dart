@@ -36,13 +36,17 @@ class _InputViewState extends State<InputView> {
   double _savedSteps = 0;
   double _savedSleep = 0;
 
-
   // keep track of which day users are logging for (defaults to today)
   DateTime _selectedDate = DateTime.now();
   // flag to track either updating existing data or creating new data
   bool _hasExistingData = false;
   // set of dates to tell the calendar where to draw dots - indicated logged dates
   Map<DateTime, String> _loggedDates = {};
+  
+  AppDatabase get db => context.read<AppDatabase>();
+
+  // to auto scroll to the top after save/update
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -119,6 +123,7 @@ class _InputViewState extends State<InputView> {
   @override
   void dispose() {
     _diaryController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -130,6 +135,7 @@ class _InputViewState extends State<InputView> {
       // Notice we removed the rigid AppBar to make it look more modern!
       body: SafeArea(
         child: ListView(
+          controller: _scrollController,
           padding: const EdgeInsets.all(24.0),
           children: [
             
@@ -396,6 +402,14 @@ class _InputViewState extends State<InputView> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: avatarCtrl.isLoading ? null : () async {
+                  
+                  // animate back to top of screen
+                  _scrollController.animateTo(
+                    0, // 0 is the very top
+                    duration: const Duration(milliseconds: 500), 
+                    curve: Curves.easeOut,
+                  );
+
                   await avatarCtrl.updateAvatarLogic(
                     steps: _steps.toInt(),
                     sleep: _sleep,
@@ -404,7 +418,9 @@ class _InputViewState extends State<InputView> {
                     workout: _workoutType,
                     date: _selectedDate,
                     moodScore: _moodScore,
+                    db: db,
                   );
+
                   // Reload the data so the Rings update
                   await _loadDataForSelectedDate();
                   // Refresh calendar dots after saving!
