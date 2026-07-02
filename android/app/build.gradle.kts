@@ -1,5 +1,8 @@
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
@@ -24,8 +27,14 @@ android {
         applicationId = "com.example.healthsync_demo_v01_00"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        
+        // minSdkVersion 26
+        // minSdk = flutter.minSdkVersion
+        minSdk = 26
+        
         targetSdk = flutter.targetSdkVersion
+        // targetSdk = 33
+
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

@@ -16,9 +16,9 @@ class UserState {
   // Helper to create a new state with updated AI info
   UserState copyWith({String? avatarState, String? coachMessage}) {
     return UserState(
-      steps: this.steps,
-      sleepHours: this.sleepHours,
-      diaryNote: this.diaryNote,
+      steps: steps,
+      sleepHours: sleepHours,
+      diaryNote: diaryNote,
       avatarState: avatarState ?? this.avatarState,
       coachMessage: coachMessage ?? this.coachMessage,
     );
