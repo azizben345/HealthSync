@@ -46,7 +46,7 @@ class AvatarController extends ChangeNotifier {
         dayWorkouts = await _db.getWorkoutsForRecord(record.id);
       }
 
-      // 2. BUILD THE CONTEXT STRING
+      // BUILD THE CONTEXT STRING
       final contextBlock = _buildPromptContext(
         steps: steps,
         sleep: sleep,
@@ -57,8 +57,7 @@ class AvatarController extends ChangeNotifier {
 
       print("DEBUG CONTEXT BLOCK: \n$contextBlock");
 
-      // 3. CALL GEMINI SERVICE AND PASS THE NEW CONTEXT
-      // Note: You will need to add 'contextBlock' to your AIService function!
+      // CALL GEMINI SERVICE AND PASS CONTEXT
       final result = await _aiService.getAvatarResponse(
         steps, 
         sleep, 
@@ -115,17 +114,17 @@ class AvatarController extends ChangeNotifier {
     required List<dynamic> meals,     // Passed from AppDatabase
     required List<dynamic> workouts,  // Passed from AppDatabase
   }) {
-    // 1. Format the Workouts
+    // Format the Workouts
     final workoutString = workouts.isEmpty 
         ? "No specific workouts logged." 
         : workouts.map((w) => "${w.activityName} (${w.durationMinutes} mins, ${w.caloriesBurned ?? 0} kcal)").join(", ");
 
-    // 2. Format the Meals
+    // Format the Meals
     final mealString = meals.isEmpty 
         ? "No specific meals logged." 
         : meals.map((m) => "${m.mealName} (${m.calories ?? 0} kcal)").join(", ");
 
-    // 3. Build the highly condensed Context Block
+    // Build the highly condensed Context Block
     return """
 [USER'S ACTUAL DATA FOR TODAY]
 - Steps: $steps

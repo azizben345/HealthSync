@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
     <uses-permission android:name="android.permission.health.WRITE_STEPS"/>
     <application
-        android:label="healthsync_demo_v01_00"
+        android:label="healthsync_v01_00"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

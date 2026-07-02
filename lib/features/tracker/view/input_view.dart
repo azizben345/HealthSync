@@ -155,12 +155,12 @@ class _InputViewState extends State<InputView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Text("Good Morning,", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey)),
-                            // NEW: A clickable button that shows the selected date
+                            // clickable button that shows the selected date
                             TextButton.icon(
                               onPressed: _pickDate,
                               icon: const Icon(Icons.calendar_month, color: Colors.teal),
                               label: Text(
-                                // If it's today, say "Today". Otherwise, show the date.
+                                // If it's today, say "Today". else, show the date.
                                 _selectedDate.day == DateTime.now().day && _selectedDate.month == DateTime.now().month 
                                     ? "Logging for Today" 
                                     : "Logging for ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
@@ -193,7 +193,6 @@ class _InputViewState extends State<InputView> {
               ],
             ),
             const SizedBox(height: 16),
-            // Placeholder for future Animated Avatar
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -245,91 +244,6 @@ class _InputViewState extends State<InputView> {
             // const SizedBox(height: 24),
 
             const SizedBox(height: 32),
-
-            // // 2. ACTIVITY CARD (Steps & Workout)
-            // const Text("Activity", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            // const SizedBox(height: 8),
-            // Card(
-            //   child: Padding(
-            //     padding: const EdgeInsets.all(16.0),
-            //     child: Column(
-            //       children: [
-            //         // Daily Metrics Input Box
-            //         const Text("Daily Metrics"),
-            //         const Divider(),
-            //         // // STEP INPUT
-            //         Text("Steps: ${_steps.toInt()}"),
-            //         // Slider(
-            //         //   value: _steps,
-            //         //   min: 0,
-            //         //   max: 20000,
-            //         //   divisions: 20,
-            //         //   label: _steps.toInt().toString(),
-            //         //   onChanged: (val) => setState(() => _steps = val),
-            //         // ),
-            //         Row(
-            //           crossAxisAlignment: CrossAxisAlignment.start,
-            //           children: [
-            //             Expanded(
-            //               child: TextFormField(
-            //                 initialValue: _steps.toString(),
-            //                 // decoration: const InputDecoration(labelText: 'Steps', border: OutlineInputBorder()),
-            //                 decoration: const InputDecoration(hintText: "Steps"),
-            //                 keyboardType: TextInputType.number,
-            //                 onChanged: (val) => setState(() => _steps = double.tryParse(val) ?? 0),
-            //               ),
-            //             ),
-            //             const SizedBox(width: 8),
-            //             // Steps Auto-Fill Button
-            //             SizedBox(
-            //               height: 56, // Match the height of the TextField
-            //               child: FilledButton.tonalIcon(
-            //                 icon: _isFetchingHealth 
-            //                     ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-            //                     : const Icon(Icons.fitbit),
-            //                 label: const Text("Auto-fill"),
-            //                 onPressed: _isFetchingHealth ? null : () async {
-            //                   setState(() => _isFetchingHealth = true);
-                              
-            //                   final steps = await HealthService().fetchTodaySteps();
-                              
-            //                   if (steps != null) {
-            //                     setState(() {
-            //                       _steps = steps.toDouble();
-            //                       // if using a TextEditingController instead of initialValue, 
-            //                       // update here. e.g., _stepsController.text = steps.toString();
-            //                     });
-            //                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Steps synced from phone!"), backgroundColor: Colors.green));
-            //                   } else {
-            //                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to get steps. Do you have Google Fit / Health Connect installed?"), backgroundColor: Colors.orange));
-            //                   }
-                              
-            //                   setState(() => _isFetchingHealth = false);
-            //                 },
-            //               ),
-            //             ),
-            //           ],
-            //         ),
-            //         const SizedBox(height: 16),
-            //         // WORKOUT?PHYSICAL SEGMENT INPUT
-            //         const Text("Workout today?"),
-            //         const SizedBox(height: 8),
-            //         SegmentedButton<String>(
-            //           segments: const [
-            //             ButtonSegment(value: 'Rest', label: Text('Rest')),
-            //             ButtonSegment(value: 'Cardio', label: Text('Cardio')),
-            //             ButtonSegment(value: 'Strength', label: Text('Strength')),
-            //           ],
-            //           selected: {_workoutType},
-            //           onSelectionChanged: (Set<String> newSelection) {
-            //             setState(() => _workoutType = newSelection.first);
-            //           },
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            // ),
-            // const SizedBox(height: 24),
 
             // 3. RECOVERY CARD (Sleep & Diet)
             // THE REFACTORED LEGO BLOCKS

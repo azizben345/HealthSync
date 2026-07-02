@@ -28,9 +28,9 @@ class Workouts extends Table {
   // This Foreign Key links the workout to a specific Daily Record!
   IntColumn get dailyRecordId => integer().references(DailyRecords, #id)(); 
   
-  TextColumn get activityName => text()(); // e.g., "Running", "Weightlifting"
+  TextColumn get activityName => text()();
   IntColumn get durationMinutes => integer()();
-  IntColumn get caloriesBurned => integer().nullable()(); // Made optional
+  IntColumn get caloriesBurned => integer().nullable()(); // optional
 }
 
 // TABLE: Meals
@@ -39,9 +39,9 @@ class Meals extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get dailyRecordId => integer().references(DailyRecords, #id)();
   
-  TextColumn get mealName => text()(); // e.g., "Chicken Salad"
-  TextColumn get mealType => text()(); // e.g., "Breakfast", "Lunch"
-  IntColumn get calories => integer().nullable()(); // Made optional
+  TextColumn get mealName => text()(); 
+  TextColumn get mealType => text()(); 
+  IntColumn get calories => integer().nullable()(); // optional
 }
 
 // TABLE: MoodSymptoms
@@ -50,7 +50,7 @@ class MoodSymptoms extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get dailyRecordId => integer().references(DailyRecords, #id)();
   
-  IntColumn get moodScore => integer().withDefault(const Constant(5))(); // The core 1-10 score
+  IntColumn get moodScore => integer().withDefault(const Constant(5))();
   IntColumn get anxietyLevel => integer().nullable()(); // 1-10
   IntColumn get productivityLevel => integer().nullable()(); // 1-10
   IntColumn get motivationLevel => integer().nullable()(); // 1-10

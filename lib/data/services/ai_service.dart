@@ -19,16 +19,7 @@ class AIService {
     String workout,
     DateTime? date, {String? contextBlock}
   ) async {
-    // final prompt = """
-    //   You are an AI character engine. 
-    //   Analyze the user's data and return creative message. 
-    //   Only relate data to note if relevant.
-    //   Return ONLY JSON.
-    //   Data: Steps: $steps, Sleep: $sleep, Diet: "$diet", Workout: "$workout", Note: "$diary"
-    //   Return format: {"state": "happy"|"tired"|"gloomy"|"proud", "message": "string"}
-    // """;
-
-    // Combine the context block with the instructions
+    // context block with the instructions
     final prompt = """
 ${contextBlock ?? ''}
 

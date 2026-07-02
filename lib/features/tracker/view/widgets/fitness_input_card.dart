@@ -53,9 +53,7 @@ class FitnessInputCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: TextFormField(
-                    key: ValueKey(
-                      steps,
-                    ), // Forces the field to update when data changes
+                    key: ValueKey(selectedDate),
                     initialValue: steps.toInt().toString(),
                     decoration: const InputDecoration(
                       hintText: "Steps",
@@ -69,17 +67,17 @@ class FitnessInputCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 SizedBox(
                   height: 56,
-                  child: FilledButton.tonalIcon(
-                    icon: isFetchingHealth
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.fitbit),
-                    label: const Text("Auto-fill"),
-                    onPressed: isFetchingHealth ? null : onAutoFill,
-                  ),
+                  // child: FilledButton.tonalIcon(
+                  //   icon: isFetchingHealth
+                  //       ? const SizedBox(
+                  //           width: 16,
+                  //           height: 16,
+                  //           child: CircularProgressIndicator(strokeWidth: 2),
+                  //         )
+                  //       : const Icon(Icons.fitbit),
+                  //   label: const Text("Auto-fill"),
+                  //   onPressed: isFetchingHealth ? null : onAutoFill,
+                  // ),
                 ),
               ],
             ),
