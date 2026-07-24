@@ -1,5 +1,5 @@
+// nutrition_input_card.dart
 import 'package:flutter/material.dart';
-import 'meal_modal.dart';
 import 'package:provider/provider.dart';
 import '../../../../data/database/app_database.dart';
 
@@ -40,20 +40,6 @@ class NutritionInputCard extends StatelessWidget {
               onSelectionChanged: (newSelection) => onDietChanged(newSelection.first),
             ),
             const SizedBox(height: 16),
-            // Center(
-            //   child: TextButton.icon(
-            //     icon: const Icon(Icons.add),
-            //     label: const Text("Log specific meal details"),
-            //     onPressed: () {
-            //       MealModal.show(context, (name, type, calories) {
-            //         // For now, just print it to test the UI! 
-            //         // We will connect this to the database next.
-            //         print("Saved: $name, $type, $calories cals");
-            //       });
-            //     },
-            //   ),
-            // ),
-            // const SizedBox(height: 16),
             Center(
               child: TextButton.icon(
                 icon: const Icon(Icons.add),

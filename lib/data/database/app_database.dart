@@ -18,6 +18,8 @@ class DailyRecords extends Table {
   TextColumn get coachMessage => text().nullable()();
   TextColumn get dietQuality => text().withDefault(const Constant('Normal'))();
   TextColumn get workoutType => text().withDefault(const Constant('Rest'))();
+  // flag is used to mark AI responses that the user has flagged as inappropriate or incorrect.
+  BoolColumn get isFlagged => boolean().withDefault(const Constant(false))();
 }
 
 // TABLE: Workouts
@@ -82,7 +84,7 @@ class ChatHistory extends Table {
   DateTimeColumn get timestamp => dateTime().withDefault(currentDateAndTime)();
 }
 
-// 2. Initialize the Database
+// Initialize the Database
 @DriftDatabase(tables: [DailyRecords, ChatHistory, Workouts, Meals, MoodSymptoms, UserGoals])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -127,7 +129,7 @@ class AppDatabase extends _$AppDatabase {
     required String avatarState,
     String? coachMessage,
   }) async {
-    // 1. Normalize the time! 
+    // 1. Normalize the time
     // This strips away the hours/minutes so we only look at the exact calendar day.
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1, milliseconds: -1));
@@ -228,7 +230,7 @@ class AppDatabase extends _$AppDatabase {
     final record = await getRecordByDate(date);
     if (record == null) return; 
 
-    // NEW: Convert the Flutter double (e.g., 5.0) into an SQLite integer (5)
+    // convert the Flutter double (e.g., 5.0) into an SQLite integer (5)
     final int intScore = score.toInt();
 
     final existingMood = await (select(moodSymptoms)
@@ -245,7 +247,7 @@ class AppDatabase extends _$AppDatabase {
       await into(moodSymptoms).insert(
         MoodSymptomsCompanion.insert(
           dailyRecordId: record.id,
-          moodScore: Value(intScore), // <-- Drift needs this explicitly wrapped in Value()
+          moodScore: Value(intScore),
         ),
       );
     }
@@ -268,8 +270,8 @@ class AppDatabase extends _$AppDatabase {
 
   // --- AI STATE UPDATE ---
   Future<void> updateRecordState(int recordId, String newState, String newMessage) async {
-    // This performs a partial update, only touching the state and message columns
-    // without overwriting the steps, sleep, or other data on that row.
+    // performs a partial update, only touching the state and message columns
+    // without overwriting the steps, sleep, or other data on that row
     await (update(dailyRecords)..where((tbl) => tbl.id.equals(recordId))).write(
       DailyRecordsCompanion(
         avatarState: Value(newState),
@@ -349,11 +351,6 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
-  // get list of all dates that has logged data
-  // Future<List<DateTime>> getAllLoggedDates() async {
-  //   final records = await select(dailyRecords).get();
-  //   return records.map((r) => r.date).toList();
-  // }
   Future<List<DailyRecord>> getAllLoggedRecords() async {
     return await select(dailyRecords).get();
   }
@@ -382,6 +379,16 @@ class AppDatabase extends _$AppDatabase {
     await (delete(dailyRecords)..where((d) => d.id.equals(recordId))).go();
   }
 
+  // --- MODERATION LOGIC ---
+  Future<void> flagAiResponse(int recordId) async {
+    // Flips the flag to true for a specific daily record
+    await (update(dailyRecords)..where((tbl) => tbl.id.equals(recordId))).write(
+      const DailyRecordsCompanion(
+        isFlagged: Value(true),
+      ),
+    );
+  }
+
 }
 
 // 4. Find a safe place on the phone to store the SQLite file
@@ -391,4 +398,5 @@ LazyDatabase _openConnection() {
     final file = File(p.join(dbFolder.path, 'fyp_tracker.sqlite'));
     return NativeDatabase.createInBackground(file);
   });
+
 }

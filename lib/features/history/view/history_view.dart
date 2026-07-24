@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:healthsync_demo_v01_00/data/database/app_database.dart';
+import 'package:healthsync_demo_v01_00/data/services/sync_service.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
@@ -104,7 +106,7 @@ class _HistoryViewState extends State<HistoryView> {
                 final records = snapshot.data ?? [];
 
                 if (records.isEmpty) {
-                  return const Center(child: Text("No records yet. Try injecting mock data!"));
+                  return const Center(child: Text("No records yet"));
                 }
 
                 // Pass the live records to whichever view is selected
@@ -249,7 +251,38 @@ class _HistoryViewState extends State<HistoryView> {
 
                     // 2. THE AI COACH MESSAGE
                     if (record.coachMessage != null && record.coachMessage!.isNotEmpty) ...[
-                      const Text("Coach Feedback", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Coach Feedback", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                          
+                          // THE FLAG/REPORT BUTTON
+                          if (!record.isFlagged) 
+                            IconButton(
+                              icon: const Icon(Icons.thumb_down_alt_outlined, size: 16, color: Colors.redAccent),
+                              tooltip: "Report unhelpful AI response",
+                              onPressed: () async {
+                                // 1. Update SQLite
+                                await db.flagAiResponse(record.id);
+                                
+                                // 2. Push to Firestore for Admin
+                                // instead of searching the Provider tree, we just create a 
+                                // quick instance of SyncService and hand it the 'db' we already have
+                                final syncService = SyncService(db); 
+                                await syncService.reportFlaggedMessageToCloud(record.id, record.coachMessage!);
+                                
+                                // 3. Show UI Confirmation
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Feedback reported to admin.")),
+                                  );
+                                }
+                              },
+                            )
+                          else
+                            const Text("Reported", style: TextStyle(fontSize: 10, color: Colors.red, fontStyle: FontStyle.italic)),
+                        ],
+                      ),
                       const SizedBox(height: 4),
                       Text(record.coachMessage!, style: const TextStyle(color: Colors.teal)),
                       const SizedBox(height: 16),

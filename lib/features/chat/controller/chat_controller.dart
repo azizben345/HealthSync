@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-// import 'package:drift/drift.dart' as drift; // required for database inserts
 import 'package:healthsync_demo_v01_00/features/chat/model/chat_message.dart';
-// import '../../model/chat_message.dart';
 import '../../../data/services/ai_service.dart';
 import '../../../data/database/app_database.dart';
 
@@ -37,7 +35,7 @@ class ChatController extends ChangeNotifier {
     // --- B. LOAD SAVED CHAT MESSAGES FROM DRIFT ---
     final savedMessages = await _db.getAllChatMessages();
     
-    // Convert Drift database rows back into our UI ChatMessage objects
+    // Convert Drift database rows back into UI ChatMessage objects
     _messages = savedMessages.map((m) => ChatMessage(
       text: m.textMessage,
       isUser: m.isUser,
@@ -45,8 +43,7 @@ class ChatController extends ChangeNotifier {
     )).toList();
 
     // --- START AI SESSION ---
-    // currently just relying on the AI reading the 'contextString' 
-    // to remember who you are, rather than sending the entire chat history back to the cloud
+    // currently just relying on the AI reading the 'contextString'
     await dotenv.load(fileName: ".env");
     final apiKey = dotenv.env['GEMINI_API_KEY']!;
     await _aiService.startNewChatSession(contextString, apiKey);

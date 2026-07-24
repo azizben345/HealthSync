@@ -38,9 +38,9 @@ class _AuthViewState extends State<AuthView> {
           _passwordController.text.trim()
         );
       }
-      // If successful, the StreamBuilder in main.dart will automatically switch screens!
+      // If successful, the StreamBuilder in main.dart will automatically switch screens
     } on FirebaseAuthException catch (e) {
-      // Show the error (e.g., "Wrong password" or "Email already in use")
+      // Show the error 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message ?? "Authentication failed"), backgroundColor: Colors.red),
@@ -66,12 +66,8 @@ class _AuthViewState extends State<AuthView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // const Icon(Icons.health_and_safety, size: 80, color: Colors.blueAccent),
                   Image.asset(
                     'assets/icon/app_icon.png',
-                    
-                    // width: 120,
-                    // height: 120,
                   ),
                   const SizedBox(height: 16),
                   Text(

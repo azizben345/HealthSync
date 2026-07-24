@@ -78,17 +78,6 @@ class AvatarController extends ChangeNotifier {
       _coachMessage = "The AI servers are currently resting. Your data is saved safely in your history.";
       
     } finally {
-      // 3. SAVE DATA
-      // await _db.insertRecord(
-      //   DailyRecordsCompanion.insert(
-      //     steps: steps,
-      //     sleepHours: sleep,
-      //     diaryNote: diary,
-      //     avatarState: _avatarState, // 'happy', 'tired', or 'pending'
-      //     dietQuality: drift.Value(diet),       
-      //     workoutType: drift.Value(workout),
-      //   ),
-      // );
       await _db.saveOrUpdateDailyLog(
         date: date ?? DateTime.now(),
         steps: steps,

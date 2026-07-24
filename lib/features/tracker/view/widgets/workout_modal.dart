@@ -1,3 +1,4 @@
+// workout_modal.dart
 import 'package:flutter/material.dart';
 
 class WorkoutModal extends StatefulWidget {
@@ -51,13 +52,9 @@ class _WorkoutModalState extends State<WorkoutModal> {
             ],
           ),
           const SizedBox(height: 16),
-          // TextField(
-          //   controller: _nameCtrl,
-          //   decoration: const InputDecoration(labelText: "Activity Name (e.g., Running, Yoga)", border: OutlineInputBorder()),
-          // ),
           // DROPDOWN MENU
           DropdownButtonFormField<String>(
-            value: _selectedActivity,
+            initialValue: _selectedActivity,
             decoration: const InputDecoration(
               labelText: "Activity Name", 
               border: OutlineInputBorder()
@@ -109,10 +106,6 @@ class _WorkoutModalState extends State<WorkoutModal> {
                   widget.onSave(_selectedActivity!, duration, calories); 
                   Navigator.pop(context);
                 }
-                // if (_nameCtrl.text.isNotEmpty && duration > 0) {
-                //   widget.onSave(_nameCtrl.text, duration, calories);
-                //   Navigator.pop(context);
-                // }
               },
               child: const Text("Save Workout"),
             ),

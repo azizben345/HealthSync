@@ -109,6 +109,21 @@ class $DailyRecordsTable extends DailyRecords
     requiredDuringInsert: false,
     defaultValue: const Constant('Rest'),
   );
+  static const VerificationMeta _isFlaggedMeta = const VerificationMeta(
+    'isFlagged',
+  );
+  @override
+  late final GeneratedColumn<bool> isFlagged = GeneratedColumn<bool>(
+    'is_flagged',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_flagged" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -120,6 +135,7 @@ class $DailyRecordsTable extends DailyRecords
     coachMessage,
     dietQuality,
     workoutType,
+    isFlagged,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -204,6 +220,12 @@ class $DailyRecordsTable extends DailyRecords
         ),
       );
     }
+    if (data.containsKey('is_flagged')) {
+      context.handle(
+        _isFlaggedMeta,
+        isFlagged.isAcceptableOrUnknown(data['is_flagged']!, _isFlaggedMeta),
+      );
+    }
     return context;
   }
 
@@ -249,6 +271,10 @@ class $DailyRecordsTable extends DailyRecords
         DriftSqlType.string,
         data['${effectivePrefix}workout_type'],
       )!,
+      isFlagged: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_flagged'],
+      )!,
     );
   }
 
@@ -268,6 +294,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
   final String? coachMessage;
   final String dietQuality;
   final String workoutType;
+  final bool isFlagged;
   const DailyRecord({
     required this.id,
     required this.date,
@@ -278,6 +305,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     this.coachMessage,
     required this.dietQuality,
     required this.workoutType,
+    required this.isFlagged,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -293,6 +321,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     }
     map['diet_quality'] = Variable<String>(dietQuality);
     map['workout_type'] = Variable<String>(workoutType);
+    map['is_flagged'] = Variable<bool>(isFlagged);
     return map;
   }
 
@@ -309,6 +338,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
           : Value(coachMessage),
       dietQuality: Value(dietQuality),
       workoutType: Value(workoutType),
+      isFlagged: Value(isFlagged),
     );
   }
 
@@ -327,6 +357,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
       coachMessage: serializer.fromJson<String?>(json['coachMessage']),
       dietQuality: serializer.fromJson<String>(json['dietQuality']),
       workoutType: serializer.fromJson<String>(json['workoutType']),
+      isFlagged: serializer.fromJson<bool>(json['isFlagged']),
     );
   }
   @override
@@ -342,6 +373,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
       'coachMessage': serializer.toJson<String?>(coachMessage),
       'dietQuality': serializer.toJson<String>(dietQuality),
       'workoutType': serializer.toJson<String>(workoutType),
+      'isFlagged': serializer.toJson<bool>(isFlagged),
     };
   }
 
@@ -355,6 +387,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     Value<String?> coachMessage = const Value.absent(),
     String? dietQuality,
     String? workoutType,
+    bool? isFlagged,
   }) => DailyRecord(
     id: id ?? this.id,
     date: date ?? this.date,
@@ -365,6 +398,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     coachMessage: coachMessage.present ? coachMessage.value : this.coachMessage,
     dietQuality: dietQuality ?? this.dietQuality,
     workoutType: workoutType ?? this.workoutType,
+    isFlagged: isFlagged ?? this.isFlagged,
   );
   DailyRecord copyWithCompanion(DailyRecordsCompanion data) {
     return DailyRecord(
@@ -387,6 +421,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
       workoutType: data.workoutType.present
           ? data.workoutType.value
           : this.workoutType,
+      isFlagged: data.isFlagged.present ? data.isFlagged.value : this.isFlagged,
     );
   }
 
@@ -401,7 +436,8 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
           ..write('avatarState: $avatarState, ')
           ..write('coachMessage: $coachMessage, ')
           ..write('dietQuality: $dietQuality, ')
-          ..write('workoutType: $workoutType')
+          ..write('workoutType: $workoutType, ')
+          ..write('isFlagged: $isFlagged')
           ..write(')'))
         .toString();
   }
@@ -417,6 +453,7 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
     coachMessage,
     dietQuality,
     workoutType,
+    isFlagged,
   );
   @override
   bool operator ==(Object other) =>
@@ -430,7 +467,8 @@ class DailyRecord extends DataClass implements Insertable<DailyRecord> {
           other.avatarState == this.avatarState &&
           other.coachMessage == this.coachMessage &&
           other.dietQuality == this.dietQuality &&
-          other.workoutType == this.workoutType);
+          other.workoutType == this.workoutType &&
+          other.isFlagged == this.isFlagged);
 }
 
 class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
@@ -443,6 +481,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
   final Value<String?> coachMessage;
   final Value<String> dietQuality;
   final Value<String> workoutType;
+  final Value<bool> isFlagged;
   const DailyRecordsCompanion({
     this.id = const Value.absent(),
     this.date = const Value.absent(),
@@ -453,6 +492,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     this.coachMessage = const Value.absent(),
     this.dietQuality = const Value.absent(),
     this.workoutType = const Value.absent(),
+    this.isFlagged = const Value.absent(),
   });
   DailyRecordsCompanion.insert({
     this.id = const Value.absent(),
@@ -464,6 +504,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     this.coachMessage = const Value.absent(),
     this.dietQuality = const Value.absent(),
     this.workoutType = const Value.absent(),
+    this.isFlagged = const Value.absent(),
   }) : steps = Value(steps),
        sleepHours = Value(sleepHours),
        diaryNote = Value(diaryNote),
@@ -478,6 +519,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     Expression<String>? coachMessage,
     Expression<String>? dietQuality,
     Expression<String>? workoutType,
+    Expression<bool>? isFlagged,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -489,6 +531,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
       if (coachMessage != null) 'coach_message': coachMessage,
       if (dietQuality != null) 'diet_quality': dietQuality,
       if (workoutType != null) 'workout_type': workoutType,
+      if (isFlagged != null) 'is_flagged': isFlagged,
     });
   }
 
@@ -502,6 +545,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     Value<String?>? coachMessage,
     Value<String>? dietQuality,
     Value<String>? workoutType,
+    Value<bool>? isFlagged,
   }) {
     return DailyRecordsCompanion(
       id: id ?? this.id,
@@ -513,6 +557,7 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
       coachMessage: coachMessage ?? this.coachMessage,
       dietQuality: dietQuality ?? this.dietQuality,
       workoutType: workoutType ?? this.workoutType,
+      isFlagged: isFlagged ?? this.isFlagged,
     );
   }
 
@@ -546,6 +591,9 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
     if (workoutType.present) {
       map['workout_type'] = Variable<String>(workoutType.value);
     }
+    if (isFlagged.present) {
+      map['is_flagged'] = Variable<bool>(isFlagged.value);
+    }
     return map;
   }
 
@@ -560,7 +608,8 @@ class DailyRecordsCompanion extends UpdateCompanion<DailyRecord> {
           ..write('avatarState: $avatarState, ')
           ..write('coachMessage: $coachMessage, ')
           ..write('dietQuality: $dietQuality, ')
-          ..write('workoutType: $workoutType')
+          ..write('workoutType: $workoutType, ')
+          ..write('isFlagged: $isFlagged')
           ..write(')'))
         .toString();
   }
@@ -2517,6 +2566,7 @@ typedef $$DailyRecordsTableCreateCompanionBuilder =
       Value<String?> coachMessage,
       Value<String> dietQuality,
       Value<String> workoutType,
+      Value<bool> isFlagged,
     });
 typedef $$DailyRecordsTableUpdateCompanionBuilder =
     DailyRecordsCompanion Function({
@@ -2529,6 +2579,7 @@ typedef $$DailyRecordsTableUpdateCompanionBuilder =
       Value<String?> coachMessage,
       Value<String> dietQuality,
       Value<String> workoutType,
+      Value<bool> isFlagged,
     });
 
 final class $$DailyRecordsTableReferences
@@ -2649,6 +2700,11 @@ class $$DailyRecordsTableFilterComposer
 
   ColumnFilters<String> get workoutType => $composableBuilder(
     column: $table.workoutType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isFlagged => $composableBuilder(
+    column: $table.isFlagged,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2781,6 +2837,11 @@ class $$DailyRecordsTableOrderingComposer
     column: $table.workoutType,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isFlagged => $composableBuilder(
+    column: $table.isFlagged,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DailyRecordsTableAnnotationComposer
@@ -2828,6 +2889,9 @@ class $$DailyRecordsTableAnnotationComposer
     column: $table.workoutType,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get isFlagged =>
+      $composableBuilder(column: $table.isFlagged, builder: (column) => column);
 
   Expression<T> workoutsRefs<T extends Object>(
     Expression<T> Function($$WorkoutsTableAnnotationComposer a) f,
@@ -2946,6 +3010,7 @@ class $$DailyRecordsTableTableManager
                 Value<String?> coachMessage = const Value.absent(),
                 Value<String> dietQuality = const Value.absent(),
                 Value<String> workoutType = const Value.absent(),
+                Value<bool> isFlagged = const Value.absent(),
               }) => DailyRecordsCompanion(
                 id: id,
                 date: date,
@@ -2956,6 +3021,7 @@ class $$DailyRecordsTableTableManager
                 coachMessage: coachMessage,
                 dietQuality: dietQuality,
                 workoutType: workoutType,
+                isFlagged: isFlagged,
               ),
           createCompanionCallback:
               ({
@@ -2968,6 +3034,7 @@ class $$DailyRecordsTableTableManager
                 Value<String?> coachMessage = const Value.absent(),
                 Value<String> dietQuality = const Value.absent(),
                 Value<String> workoutType = const Value.absent(),
+                Value<bool> isFlagged = const Value.absent(),
               }) => DailyRecordsCompanion.insert(
                 id: id,
                 date: date,
@@ -2978,6 +3045,7 @@ class $$DailyRecordsTableTableManager
                 coachMessage: coachMessage,
                 dietQuality: dietQuality,
                 workoutType: workoutType,
+                isFlagged: isFlagged,
               ),
           withReferenceMapper: (p0) => p0
               .map(

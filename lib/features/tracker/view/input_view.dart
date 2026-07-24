@@ -1,11 +1,9 @@
+//input_view.dart
 import 'package:flutter/material.dart';
 import 'package:healthsync_demo_v01_00/data/database/app_database.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import '../../avatar/controller/avatar_controller.dart';
-// import '../../../data/services/auth_service.dart';
-// import '../../../data/database/app_database.dart';
-// import '../../../data/services/sync_service.dart';
 import '../../../data/services/health_service.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'widgets/fitness_input_card.dart';

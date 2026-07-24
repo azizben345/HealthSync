@@ -78,31 +78,6 @@ class _ProfileViewState extends State<ProfileView> {
                         );
                       },
                     ),
-                    // ListTile(
-                    //   leading: const Icon(Icons.directions_walk, color: Colors.teal),
-                    //   title: const Text("Step Goal"),
-                    //   trailing: Row(
-                    //     mainAxisSize: MainAxisSize.min,
-                    //     children: [
-                    //       Text("${goalProvider.stepGoal} steps", style: const TextStyle(fontWeight: FontWeight.bold)),
-                    //       const Icon(Icons.chevron_right, color: Colors.grey),
-                    //     ],
-                    //   ),
-                    //   onTap: () => _showEditStepGoalDialog(context, goalProvider),
-                    // ),
-                    // const Divider(height: 1),
-                    // ListTile(
-                    //   leading: const Icon(Icons.bedtime, color: Colors.indigo),
-                    //   title: const Text("Sleep Goal"),
-                    //   trailing: Row(
-                    //     mainAxisSize: MainAxisSize.min,
-                    //     children: [
-                    //       Text("${goalProvider.sleepGoal} hrs", style: const TextStyle(fontWeight: FontWeight.bold)),
-                    //       const Icon(Icons.chevron_right, color: Colors.grey),
-                    //     ],
-                    //   ),
-                    //   onTap: () => _showEditSleepGoalDialog(context, goalProvider),
-                    // ),
                   ],
                 ),
               );
@@ -228,14 +203,6 @@ class _ProfileViewState extends State<ProfileView> {
                     TextButton(
                       onPressed: () async {
                         Navigator.pop(context); // Close dialog
-                        
-                        // // 1. Wipe the Communal Whiteboard (Daily Records AND Chat History)
-                        // // comment out during authentication testing
-                        // final db = context.read<AppDatabase>();
-                        // await db.clearAllDailyRecords();
-                        // await db.clearChatHistory();
-                        
-                        // 2. Hand back the keycard (Log out)
                         await AuthService().signOut();
                       }, 
                       child: const Text("Wipe & Logout", style: TextStyle(color: Colors.red))
