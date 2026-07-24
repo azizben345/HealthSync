@@ -1,5 +1,5 @@
+//fitness_input_card.dart
 import 'package:flutter/material.dart';
-import 'workout_modal.dart';
 import 'package:provider/provider.dart'; 
 import '../../../../data/database/app_database.dart';
 
@@ -67,17 +67,6 @@ class FitnessInputCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 SizedBox(
                   height: 56,
-                  // child: FilledButton.tonalIcon(
-                  //   icon: isFetchingHealth
-                  //       ? const SizedBox(
-                  //           width: 16,
-                  //           height: 16,
-                  //           child: CircularProgressIndicator(strokeWidth: 2),
-                  //         )
-                  //       : const Icon(Icons.fitbit),
-                  //   label: const Text("Auto-fill"),
-                  //   onPressed: isFetchingHealth ? null : onAutoFill,
-                  // ),
                 ),
               ],
             ),
@@ -109,18 +98,6 @@ class FitnessInputCard extends StatelessWidget {
                   onWorkoutChanged(newSelection.first),
             ),
             const SizedBox(height: 16),
-
-            // // WORKOUT MODAL
-            // Center(
-            //   child: TextButton.icon(
-            //     icon: const Icon(Icons.add),
-            //     label: const Text("Log specific workout details"),
-            //     onPressed: () {
-            //       WorkoutModal.show(context, (name, type, duration) {});
-            //     },
-            //   ),
-            // ),
-            // const SizedBox(height: 16),
             Center(
               child: TextButton.icon(
                 icon: const Icon(Icons.add),

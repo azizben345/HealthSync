@@ -1,3 +1,4 @@
+// ai_service.dart
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart' as drift; 
@@ -55,16 +56,16 @@ Return only JSON, format:
     }
   }
 
-  // NEW: A variable to hold the ongoing conversation memory
-  late drift.ChatSession _chatSession; // Assuming you are using google_generative_ai
+  // variable to hold the ongoing conversation memory
+  late drift.ChatSession _chatSession; 
 
   // 1. Initialize the chat with the database history
   Future<void> startNewChatSession(String systemContext, String apiKey) async {
-    // gemini-1.5-flash is the best model for fast, multi-turn chat
+    // gemini-1.5-flash best model for fast, multi-turn chat
     final model = GenerativeModel(
       model: 'gemini-2.5-flash',
       apiKey: apiKey,
-      // We feed it the SQLite data as a hidden system instruction so it knows the user!
+      
       systemInstruction: Content.system(
         "You are HealthSync, an empathetic AI health coach. "
         "Here is the user's recent health data: $systemContext\n"
@@ -72,7 +73,7 @@ Return only JSON, format:
       ),
     );
 
-    // This creates a blank chat history, ready for the user's first message
+    // creates a blank chat history, ready for user's first message
     _chatSession = model.startChat();
   }
 

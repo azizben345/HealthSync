@@ -1,3 +1,4 @@
+// goal_settings_view.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/database/app_database.dart'; // Point to your DB!
@@ -153,16 +154,16 @@ class _GoalSettingsViewState extends State<GoalSettingsView> {
           children: [
             const Text("Set your baseline targets so your AI Coach can track your progress.", style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),
-            
+            // --- FITNESS & EXERCISE ---          
             _buildSectionHeader(Icons.directions_walk, "Fitness & Exercise Preferences"),
             _buildTextField(_stepsCtrl, "Daily Steps", "e.g., 8000"),
             _buildTextField(_sleepCtrl, "Target Sleep (Hours)", "e.g., 7.5"),
             _buildTextField(_workoutCtrl, "Weekly Workout Duration (Mins)", "e.g., 150"),
-            
+            // --- NUTRITION ---
             const SizedBox(height: 24),
             _buildSectionHeader(Icons.restaurant, "Nutrition Goal"),
             _buildTextField(_calCtrl, "Daily Calorie Limit", "e.g., 2200"),
-            
+            // --- MENTAL WELL-BEING ---
             const SizedBox(height: 24),
             _buildSectionHeader(Icons.psychology, "Mental Well-being"),
             _buildTextField(_moodCtrl, "Target Average Mood (1-10)", "e.g., 6.5"),

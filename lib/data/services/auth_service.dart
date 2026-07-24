@@ -3,10 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // This stream acts as a listener. It yells out whenever the user logs in or out.
+  // acts as a listener
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   
-  // Get the current logged-in user
+  // get the current logged-in user
   User? get currentUser => _auth.currentUser;
 
   // Login
@@ -18,7 +18,7 @@ class AuthService {
       );
       return credential.user;
     } catch (e) {
-      rethrow; // Pass the error to the UI so we can show a snackbar
+      rethrow; // Pass the error to the UI 
     }
   }
 

@@ -1,3 +1,4 @@
+// sync_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../database/app_database.dart';
@@ -103,7 +104,7 @@ class SyncService {
     if (data.containsKey('daily_records')) {
       final List<dynamic> cloudRecords = data['daily_records'];
       
-      // 1. Wipe the local database completely (Make sure this function drops the child tables too!)
+      // 1. Wipe the local database completely
       await _db.clearAllDailyRecords(); 
 
       // 2. Loop through cloud data and rebuild SQLite
@@ -145,4 +146,25 @@ class SyncService {
       }
     }
   }
+
+// --- ADMIN MODERATION: PUSH FLAGGED MESSAGE ---
+  Future<void> reportFlaggedMessageToCloud(int recordId, String badMessage) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      // Pushes to a dedicated 'flagged_ai_responses' collection for the Admin
+      await _firestore.collection('flagged_ai_responses').add({
+        'userId': user.uid,
+        'recordId': recordId,
+        'flaggedMessage': badMessage,
+        'timestamp': FieldValue.serverTimestamp(),
+        'status': 'Pending Review',
+      });
+      print("Bad AI response successfully reported to Admin console.");
+    } catch (e) {
+      print("Failed to report flagged message: $e");
+    }
+  }
+
 }
